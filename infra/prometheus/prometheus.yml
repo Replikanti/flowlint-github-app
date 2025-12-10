@@ -1,0 +1,39 @@
+# Prometheus configuration for FlowLint monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'flowlint'
+    environment: 'production'
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - 'alertmanager:9093'
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - '/etc/prometheus/alert_rules.yml'
+
+# Scrape configurations
+scrape_configs:
+  # FlowLint API metrics
+  - job_name: 'flowlint-api'
+    static_configs:
+      - targets: ['api:8080']
+        labels:
+          service: 'api'
+          app: 'flowlint'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
