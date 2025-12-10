@@ -1,0 +1,69 @@
+# Docker Compose configuration for staging environment
+# This runs staging on the same server as production but with different ports
+# Use: docker compose -f docker-compose.staging.yml -f docker-compose.secrets.yml up -d
+
+version: '3.9'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: flowlint-redis-staging
+    command: redis-server --appendonly yes --databases 16
+    volumes:
+      - redis_data_staging:/data
+    networks:
+      - flowlint_staging_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: ghcr.io/replikanti/flowlint-api:latest
+    container_name: flowlint-api-staging
+    ports:
+      - "127.0.0.1:18081:8080"  # Staging port: 18081
+    environment:
+      REDIS_URL: redis://redis:6379/1  # Use Redis database 1 for staging
+      PORT: 8080
+      NODE_ENV: staging
+      CHECK_NAME: FlowLint Staging
+      # Secrets are injected via docker-compose.secrets.yml
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - flowlint_staging_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  worker:
+    image: ghcr.io/replikanti/flowlint-worker:latest
+    container_name: flowlint-worker-staging
+    environment:
+      REDIS_URL: redis://redis:6379/1  # Use Redis database 1 for staging
+      NODE_ENV: staging
+      CHECK_NAME: FlowLint Staging
+      # Secrets are injected via docker-compose.secrets.yml
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - flowlint_staging_net
+    restart: unless-stopped
+
+networks:
+  flowlint_staging_net:
+    name: flowlint_staging_net
+    driver: bridge
+
+volumes:
+  redis_data_staging:
+    name: flowlint_redis_data_staging

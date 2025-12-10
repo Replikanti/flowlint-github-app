@@ -1,0 +1,140 @@
+version: '3.9'
+
+networks:
+  flowlint_net:
+    driver: bridge
+    internal: true
+
+volumes:
+  flowlint_redis_data:
+  flowlint_prometheus_data:
+  flowlint_grafana_data:
+  flowlint_tempo_data:
+
+services:
+  redis:
+    image: redis:7.2
+    container_name: flowlint-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1000", "--appendonly", "yes"]
+    volumes:
+      - flowlint_redis_data:/data
+    networks:
+      - flowlint_net
+
+  api:
+    image: ghcr.io/replikanti/flowlint-api:latest
+    container_name: flowlint-api
+    pull_policy: always
+    command: node --init dist/apps/api/src/server.js
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      REDIS_URL: redis://flowlint-redis:6379
+      TRUST_PROXY: '1'
+      OTEL_SERVICE_NAME: flowlint-api
+      OTEL_EXPORTER: otlp-http
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://flowlint-tempo:4318/v1/traces
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: '0.1'
+    networks:
+      - flowlint_net
+    ports:
+      - '127.0.0.1:18080:8080'
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - tempo
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+
+  worker:
+    image: ghcr.io/replikanti/flowlint-worker:latest
+    container_name: flowlint-worker
+    pull_policy: always
+    command: node --init dist/apps/worker/src/worker.js
+    env_file:
+      - ../.env
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://flowlint-redis:6379
+      OTEL_SERVICE_NAME: flowlint-worker
+      OTEL_EXPORTER: otlp-http
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://flowlint-tempo:4318/v1/traces
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: '0.1'
+    networks:
+      - flowlint_net
+    restart: unless-stopped
+    stop_grace_period: 60s
+    depends_on:
+      - redis
+      - tempo
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: flowlint-tempo
+    command:
+      - "-config.file=/etc/tempo.yaml"
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - flowlint_tempo_data:/tmp/tempo
+    ports:
+      - '127.0.0.1:3200:3200'
+      - '127.0.0.1:4318:4318'
+      - '127.0.0.1:4317:4317'
+    networks:
+      - flowlint_net
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: flowlint-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - flowlint_prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - flowlint_net
+    ports:
+      - '127.0.0.1:9090:9090'
+    depends_on:
+      - api
+      - tempo
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: flowlint-grafana
+    restart: unless-stopped
+    volumes:
+      - flowlint_grafana_data:/var/lib/grafana
+      - ./grafana/dashboard.json:/etc/grafana/provisioning/dashboards/flowlint.json:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+    networks:
+      - flowlint_net
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      - prometheus
+      - tempo

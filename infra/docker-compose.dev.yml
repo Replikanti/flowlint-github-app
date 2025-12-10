@@ -1,0 +1,55 @@
+version: '3.9'
+services:
+  api:
+    image: node:22
+    command: npx ts-node --project /srv/flowlint/tsconfig.json apps/api/src/server.ts
+    env_file:
+      - ../.env
+    environment:
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      TRUST_PROXY: '1'
+      OTEL_SERVICE_NAME: flowlint-api
+      OTEL_EXPORTER: otlp-http
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+      OTEL_TRACES_SAMPLER: always_on
+    ports:
+      - '127.0.0.1:8080:8080'
+    depends_on:
+      - redis
+      - jaeger
+    volumes:
+      - ..:/srv/flowlint
+    working_dir: /srv/flowlint
+  worker:
+    image: node:22
+    command: npx ts-node --project /srv/flowlint/tsconfig.json apps/worker/src/worker.ts
+    env_file:
+      - ../.env
+    environment:
+      REDIS_URL: redis://redis:6379
+      OTEL_SERVICE_NAME: flowlint-worker
+      OTEL_EXPORTER: otlp-http
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+      OTEL_TRACES_SAMPLER: always_on
+    depends_on:
+      - redis
+      - jaeger
+    volumes:
+      - ..:/srv/flowlint
+    working_dir: /srv/flowlint
+    stop_grace_period: 60s
+  redis:
+    image: redis:7.2
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: flowlint-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4318:4318"    # OTLP HTTP receiver
+      - "4317:4317"    # OTLP gRPC receiver
+      - "14268:14268"  # Jaeger collector HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory
+      - JAEGER_DISABLED=false

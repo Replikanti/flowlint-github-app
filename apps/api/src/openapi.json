@@ -1,0 +1,734 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FlowLint API",
+    "version": "0.2.0",
+    "description": "FlowLint is a GitHub App that performs static analysis on n8n workflow JSON files in pull requests. It parses workflow files, applies configurable lint rules, and reports findings via GitHub Check Runs with annotations.",
+    "contact": {
+      "name": "FlowLint Support",
+      "url": "https://github.com/Replikanti/flowlint-app"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/Replikanti/flowlint-app/blob/main/LICENSE"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.flowlint.dev",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:8080",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Webhooks",
+      "description": "GitHub webhook endpoints for receiving events"
+    },
+    {
+      "name": "Health",
+      "description": "Health check and monitoring endpoints"
+    },
+    {
+      "name": "Metrics",
+      "description": "Prometheus metrics endpoints"
+    }
+  ],
+  "paths": {
+    "/webhooks/github": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "GitHub Webhook Receiver",
+        "description": "Receives GitHub App webhook events for pull requests, check suites, check runs, and installation events. Verifies HMAC signatures and enqueues review jobs.",
+        "operationId": "receiveGitHubWebhook",
+        "parameters": [
+          {
+            "name": "X-GitHub-Event",
+            "in": "header",
+            "required": true,
+            "description": "The name of the event that triggered the webhook",
+            "schema": {
+              "type": "string",
+              "enum": ["pull_request", "check_suite", "check_run", "installation", "installation_repositories"]
+            }
+          },
+          {
+            "name": "X-GitHub-Delivery",
+            "in": "header",
+            "required": true,
+            "description": "Unique identifier for the webhook delivery",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Hub-Signature-256",
+            "in": "header",
+            "required": true,
+            "description": "HMAC-SHA256 signature of the request body using the webhook secret",
+            "schema": {
+              "type": "string",
+              "pattern": "^sha256=[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "GitHub webhook event payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/PullRequestEvent" },
+                  { "$ref": "#/components/schemas/CheckSuiteEvent" },
+                  { "$ref": "#/components/schemas/CheckRunEvent" },
+                  { "$ref": "#/components/schemas/InstallationRepositoriesEvent" }
+                ]
+              },
+              "examples": {
+                "pull_request_opened": {
+                  "summary": "Pull Request Opened",
+                  "value": {
+                    "action": "opened",
+                    "number": 42,
+                    "pull_request": {
+                      "number": 42,
+                      "head": {
+                        "sha": "abc123def456",
+                        "ref": "feature/my-feature"
+                      }
+                    },
+                    "repository": {
+                      "full_name": "owner/repo"
+                    },
+                    "installation": {
+                      "id": 12345
+                    }
+                  }
+                },
+                "check_suite_requested": {
+                  "summary": "Check Suite Requested",
+                  "value": {
+                    "action": "requested",
+                    "check_suite": {
+                      "id": 98765,
+                      "head_sha": "abc123def456",
+                      "pull_requests": [
+                        {
+                          "number": 42,
+                          "head": {
+                            "ref": "feature/my-feature"
+                          }
+                        }
+                      ]
+                    },
+                    "repository": {
+                      "full_name": "owner/repo"
+                    },
+                    "installation": {
+                      "id": 12345
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook successfully processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookSuccess"
+                },
+                "example": {
+                  "ok": true,
+                  "delivery": "550e8400-e29b-41d4-a716-446655440000"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Webhook accepted but not processed (missing required data)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookError"
+                },
+                "example": {
+                  "ok": false,
+                  "error": "Missing installation id"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid HMAC signature",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookError"
+                },
+                "example": {
+                  "ok": false,
+                  "error": "Invalid signature"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (100 requests per minute per IP)",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "Maximum number of requests allowed in the time window",
+                "schema": {
+                  "type": "integer",
+                  "example": 100
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Number of requests remaining in the current window",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Unix timestamp when the rate limit window resets",
+                "schema": {
+                  "type": "integer",
+                  "example": 1699564800
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookError"
+                },
+                "example": {
+                  "ok": false,
+                  "error": "Too many requests, please try again later."
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "GitHubWebhookSignature": []
+          }
+        ]
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Comprehensive Health Check",
+        "description": "Verifies all dependencies (Redis, Queue). Returns 200 if healthy, 503 if any dependency is degraded or errored.",
+        "operationId": "getHealthStatus",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "ok",
+                  "timestamp": "2025-01-15T10:30:00.000Z",
+                  "checks": {
+                    "redis": {
+                      "status": "ok",
+                      "latency_ms": 2
+                    },
+                    "queue": {
+                      "status": "ok",
+                      "waiting": 5,
+                      "active": 2,
+                      "completed": 1523,
+                      "failed": 3
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service is degraded or unhealthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "error",
+                  "timestamp": "2025-01-15T10:30:00.000Z",
+                  "checks": {
+                    "redis": {
+                      "status": "error",
+                      "error": "ECONNREFUSED"
+                    },
+                    "queue": {
+                      "status": "error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/livez": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Liveness Probe",
+        "description": "Checks if the process is alive and responsive. Always returns 200 unless the process is completely hung.",
+        "operationId": "getLivenessStatus",
+        "responses": {
+          "200": {
+            "description": "Process is alive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                },
+                "example": {
+                  "status": "ok",
+                  "uptime": 3600
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Readiness Probe",
+        "description": "Checks if the service can handle traffic. Returns 200 if ready, 503 if dependencies are unavailable.",
+        "operationId": "getReadinessStatus",
+        "responses": {
+          "200": {
+            "description": "Service is ready to accept traffic",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service is not ready (dependencies unavailable)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": ["Metrics"],
+        "summary": "Prometheus Metrics",
+        "description": "Returns application metrics in Prometheus exposition format for monitoring and alerting.",
+        "operationId": "getPrometheusMetrics",
+        "responses": {
+          "200": {
+            "description": "Prometheus metrics in text format",
+            "content": {
+              "text/plain; version=0.0.4": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "# HELP flowlint_webhooks_total Total number of GitHub webhooks received\n# TYPE flowlint_webhooks_total counter\nflowlint_webhooks_total{event=\"pull_request\",action=\"opened\"} 42\n\n# HELP flowlint_review_jobs_total Total number of review jobs processed\n# TYPE flowlint_review_jobs_total counter\nflowlint_review_jobs_total{status=\"completed\"} 38\nflowlint_review_jobs_total{status=\"failed\"} 4\n\n# HELP flowlint_findings_total Total number of lint findings detected\n# TYPE flowlint_findings_total counter\nflowlint_findings_total{rule=\"R1\",severity=\"must\"} 15\n"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PullRequestEvent": {
+        "type": "object",
+        "required": ["action", "pull_request", "repository", "installation"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["opened", "synchronize", "ready_for_review"],
+            "description": "The action performed on the pull request"
+          },
+          "number": {
+            "type": "integer",
+            "description": "The pull request number"
+          },
+          "pull_request": {
+            "type": "object",
+            "required": ["number", "head"],
+            "properties": {
+              "number": {
+                "type": "integer"
+              },
+              "head": {
+                "type": "object",
+                "required": ["sha", "ref"],
+                "properties": {
+                  "sha": {
+                    "type": "string",
+                    "description": "The SHA of the HEAD commit"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "The name of the branch"
+                  }
+                }
+              }
+            }
+          },
+          "repository": {
+            "type": "object",
+            "required": ["full_name"],
+            "properties": {
+              "full_name": {
+                "type": "string",
+                "description": "Full repository name (owner/repo)"
+              }
+            }
+          },
+          "installation": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "GitHub App installation ID"
+              }
+            }
+          }
+        }
+      },
+      "CheckSuiteEvent": {
+        "type": "object",
+        "required": ["action", "check_suite", "repository", "installation"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["requested", "rerequested"],
+            "description": "The action performed on the check suite"
+          },
+          "check_suite": {
+            "type": "object",
+            "required": ["id", "head_sha"],
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "head_sha": {
+                "type": "string",
+                "description": "The SHA of the HEAD commit"
+              },
+              "pull_requests": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "number": {
+                      "type": "integer"
+                    },
+                    "head": {
+                      "type": "object",
+                      "properties": {
+                        "ref": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "latest_check_runs": {
+                "type": "array",
+                "description": "Array of check runs associated with this suite",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "repository": {
+            "type": "object",
+            "required": ["full_name"],
+            "properties": {
+              "full_name": {
+                "type": "string"
+              }
+            }
+          },
+          "installation": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "CheckRunEvent": {
+        "type": "object",
+        "required": ["action", "check_run", "repository", "installation"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["rerequested", "requested_action"],
+            "description": "The action performed on the check run"
+          },
+          "check_run": {
+            "type": "object",
+            "required": ["id", "head_sha"],
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "head_sha": {
+                "type": "string"
+              },
+              "head_branch": {
+                "type": "string"
+              },
+              "check_suite": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "pull_requests": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "number": {
+                          "type": "integer"
+                        },
+                        "head": {
+                          "type": "object",
+                          "properties": {
+                            "ref": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "repository": {
+            "type": "object",
+            "required": ["full_name"],
+            "properties": {
+              "full_name": {
+                "type": "string"
+              }
+            }
+          },
+          "installation": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "InstallationRepositoriesEvent": {
+        "type": "object",
+        "required": ["action", "installation"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["added", "removed"],
+            "description": "The action performed on installation repositories"
+          },
+          "installation": {
+            "type": "object",
+            "required": ["id"],
+            "properties": {
+              "id": {
+                "type": "integer"
+              }
+            }
+          },
+          "repositories_added": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "full_name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "repositories_removed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "full_name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "WebhookSuccess": {
+        "type": "object",
+        "required": ["ok", "delivery"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          },
+          "delivery": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the webhook delivery"
+          }
+        }
+      },
+      "WebhookError": {
+        "type": "object",
+        "required": ["ok", "error"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message describing what went wrong"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status", "timestamp", "checks"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok", "degraded", "error"],
+            "description": "Overall health status"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the health check"
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "redis": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["ok", "degraded", "error"]
+                  },
+                  "latency_ms": {
+                    "type": "number",
+                    "description": "Redis ping latency in milliseconds"
+                  },
+                  "error": {
+                    "type": "string",
+                    "description": "Error message if status is not ok"
+                  }
+                }
+              },
+              "queue": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["ok", "degraded", "error"]
+                  },
+                  "waiting": {
+                    "type": "integer",
+                    "description": "Number of jobs waiting in queue"
+                  },
+                  "active": {
+                    "type": "integer",
+                    "description": "Number of jobs currently being processed"
+                  },
+                  "completed": {
+                    "type": "integer",
+                    "description": "Number of completed jobs"
+                  },
+                  "failed": {
+                    "type": "integer",
+                    "description": "Number of failed jobs"
+                  },
+                  "error": {
+                    "type": "string",
+                    "description": "Error message if status is not ok"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "LivenessResponse": {
+        "type": "object",
+        "required": ["status", "uptime"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"],
+            "example": "ok"
+          },
+          "uptime": {
+            "type": "integer",
+            "description": "Process uptime in seconds",
+            "example": 3600
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "GitHubWebhookSignature": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Hub-Signature-256",
+        "description": "HMAC-SHA256 signature of the request body computed using the webhook secret configured in GitHub App settings. Format: `sha256=<hex-digest>`"
+      }
+    }
+  }
+}

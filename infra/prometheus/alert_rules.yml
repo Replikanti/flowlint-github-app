@@ -1,0 +1,97 @@
+# Prometheus alert rules for FlowLint
+
+groups:
+  - name: flowlint_alerts
+    interval: 30s
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(flowlint_jobs_completed_total{status="failure"}[5m]))
+          /
+          sum(rate(flowlint_jobs_completed_total[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High job failure rate detected"
+          description: "Job failure rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # Queue depth alert
+      - alert: HighQueueDepth
+        expr: flowlint_queue_depth{state="waiting"} > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Queue depth is very high"
+          description: "{{ $value }} jobs waiting in queue (threshold: 100)"
+
+      # Job duration alert
+      - alert: SlowJobProcessing
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(flowlint_job_duration_seconds_bucket[5m])) by (le)
+          ) > 30
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Job processing is slow"
+          description: "P95 job duration is {{ $value }}s (threshold: 30s)"
+
+      # API availability alert
+      - alert: APIDown
+        expr: up{job="flowlint-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "FlowLint API is down"
+          description: "FlowLint API has been unavailable for 2 minutes"
+
+      # GitHub API rate limit alert
+      - alert: GitHubRateLimitApproaching
+        expr: |
+          sum(rate(flowlint_github_api_calls_total[1m])) > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GitHub API rate limit approaching"
+          description: "Making {{ $value }} GitHub API calls per minute (limit: 5000/hour)"
+
+      # Memory usage alert
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes > 1073741824  # 1GB
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Process using {{ $value | humanize }}B of memory (threshold: 1GB)"
+
+      # No webhooks received (possible misconfiguration)
+      - alert: NoWebhooksReceived
+        expr: |
+          rate(flowlint_webhook_received_total[10m]) == 0
+        for: 30m
+        labels:
+          severity: info
+        annotations:
+          summary: "No webhooks received recently"
+          description: "No webhooks have been received in the last 30 minutes. This may indicate a configuration issue."
+
+      # Stuck jobs (queue not draining)
+      - alert: QueueNotDraining
+        expr: |
+          flowlint_queue_depth{state="waiting"} > 10
+          and
+          rate(flowlint_jobs_completed_total[5m]) == 0
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Queue is not draining"
+          description: "{{ $value }} jobs stuck in queue with no completions"
