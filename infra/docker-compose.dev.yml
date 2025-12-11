@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   api:
-    image: node:22
+    image: node:22.21.1
     command: npx ts-node --project /srv/flowlint/tsconfig.json apps/api/src/server.ts
     env_file:
       - ../.env
@@ -22,7 +22,7 @@ services:
       - ..:/srv/flowlint
     working_dir: /srv/flowlint
   worker:
-    image: node:22
+    image: node:22.21.1
     command: npx ts-node --project /srv/flowlint/tsconfig.json apps/worker/src/worker.ts
     env_file:
       - ../.env
