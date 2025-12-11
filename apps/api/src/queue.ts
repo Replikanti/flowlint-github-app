@@ -1,6 +1,6 @@
 import { Queue } from 'bullmq';
-import { logger } from '../../../packages/logger';
-import { jobsQueuedCounter } from '../../../packages/observability';
+import { logger } from 'packages/logger';
+import { jobsQueuedCounter } from 'packages/observability';
 
 export type ReviewJob = {
   installationId: number;
