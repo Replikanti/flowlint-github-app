@@ -5,15 +5,15 @@ setupWorkerTracing().catch((error) => console.error('Failed to initialize tracin
 
 import { Worker, Job } from 'bullmq';
 import { getInstallationClient } from '../../../packages/github/client';
-import { loadConfig } from '../../../@replikanti/flowlint-core';
+import { loadConfigFromGitHub } from '../../../packages/github/config-loader';
 import { pickTargets, fetchRawFiles } from '../../../packages/github/sniffer';
-import { parseN8n } from '../../../@replikanti/flowlint-core';
-import { ValidationError } from '../../../@replikanti/flowlint-core';
-import { runAllRules } from '../../../@replikanti/flowlint-core';
-import { buildCheckOutput, buildAnnotations } from '../../../@replikanti/flowlint-core';
-import { getExampleLink } from '../../../@replikanti/flowlint-core';
+import { parseN8n } from '@replikanti/flowlint-core';
+import { ValidationError } from '@replikanti/flowlint-core';
+import { runAllRules } from '@replikanti/flowlint-core';
+import { buildCheckOutput, buildAnnotations } from '@replikanti/flowlint-core';
+import { getExampleLink } from '@replikanti/flowlint-core';
 import type { ReviewJob } from '../../api/src/queue';
-import type { Finding } from '../../../@replikanti/flowlint-core';
+import type { Finding } from '@replikanti/flowlint-core';
 import { Octokit } from 'octokit';
 import { logger, createChildLogger } from '../../../packages/logger';
 import {
@@ -77,7 +77,7 @@ function assertCheckRunId(value: number | undefined): number {
 function formatParseError(error: unknown): string | undefined {
   if (error instanceof ValidationError && Array.isArray(error.errors) && error.errors.length > 0) {
     return error.errors
-      .map((err) => {
+      .map((err: { path: string; message: string; suggestion?: string }) => {
         const suggestion = err.suggestion ? ` (suggestion: ${err.suggestion})` : '';
         return `- ${err.path}: ${err.message}${suggestion}`;
       })
@@ -153,8 +153,8 @@ const worker = new Worker<ReviewJob>(
         per_page: 100,
       });
 
-      // 2. Load config and filter for target files
-      const cfg = await loadConfig(gh, repo, sha);
+      // 2. Load config from GitHub (using helper) and filter for target files
+      const cfg = await loadConfigFromGitHub(gh, repo, sha);
       const targets = pickTargets(allFiles, cfg.files);
       const activeCheckRunId = assertCheckRunId(checkRunId);
 

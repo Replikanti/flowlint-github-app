@@ -1,4 +1,4 @@
-import { initTracing } from '../../../packages/tracing';
+import { initTracing } from 'packages/tracing';
 
 // Initialize OpenTelemetry tracing for worker process
 export async function setupWorkerTracing(): Promise<void> {

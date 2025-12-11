@@ -1,4 +1,4 @@
-import { initTracing } from '../../../packages/tracing';
+import { initTracing } from 'packages/tracing';
 
 // Initialize OpenTelemetry tracing for API server
 // This must be called BEFORE any other imports that need instrumentation
