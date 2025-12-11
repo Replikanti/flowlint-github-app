@@ -94,7 +94,7 @@ services:
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:v2.48.0
+    image: prom/prometheus:v2.55.1
     container_name: flowlint-prometheus
     restart: unless-stopped
     volumes:
