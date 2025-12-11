@@ -5,7 +5,7 @@
 # ============================================================================
 # Stage 1: Builder
 # ============================================================================
-FROM node:24.11.1-alpine AS builder
+FROM node:24.11.1-alpine@sha256:682368d8253e0c3364b803956085c456a612d738bd635926d73fa24db3ce53d7 AS builder
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ RUN npm run build
 # ============================================================================
 # Stage 2: Production
 # ============================================================================
-FROM node:24.11.1-alpine AS production
+FROM node:24.11.1-alpine@sha256:682368d8253e0c3364b803956085c456a612d738bd635926d73fa24db3ce53d7 AS production
 
 # Upgrade npm to latest version
 RUN npm install -g npm@latest
