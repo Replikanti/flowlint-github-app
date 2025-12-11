@@ -21,7 +21,7 @@ import {
   jobDurationHistogram,
   findingsGeneratedCounter,
 } from '../../../packages/observability';
-import { withSpan, SpanNames, setSpanAttributes, recordSpanException } from '../../../packages/tracing';
+import { withSpan, SpanNames, setSpanAttributes, recordSpanException } from '../../../packages/tracing/exports';
 
 const BATCH_SIZE = 50;
 
