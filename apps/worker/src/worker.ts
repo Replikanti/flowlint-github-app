@@ -5,15 +5,15 @@ setupWorkerTracing().catch((error) => console.error('Failed to initialize tracin
 
 import { Worker, Job } from 'bullmq';
 import { getInstallationClient } from '../../../packages/github/client';
-import { loadConfig } from '../../../packages/config/flowlint-config';
-import { pickTargets, fetchRawFiles } from '../../../packages/review/sniffer';
-import { parseN8n } from '../../../packages/review/parser-n8n';
-import { ValidationError } from '../../../packages/review/schemas';
-import { runAllRules } from '../../../packages/review/rules';
-import { buildCheckOutput, buildAnnotations } from '../../../packages/review/reporter';
-import { getExampleLink } from '../../../packages/review/utils';
+import { loadConfig } from '../../../@replikanti/flowlint-core';
+import { pickTargets, fetchRawFiles } from '../../../packages/github/sniffer';
+import { parseN8n } from '../../../@replikanti/flowlint-core';
+import { ValidationError } from '../../../@replikanti/flowlint-core';
+import { runAllRules } from '../../../@replikanti/flowlint-core';
+import { buildCheckOutput, buildAnnotations } from '../../../@replikanti/flowlint-core';
+import { getExampleLink } from '../../../@replikanti/flowlint-core';
 import type { ReviewJob } from '../../api/src/queue';
-import type { Finding } from '../../../packages/review/types';
+import type { Finding } from '../../../@replikanti/flowlint-core';
 import { Octokit } from 'octokit';
 import { logger, createChildLogger } from '../../../packages/logger';
 import {
