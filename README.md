@@ -1,4 +1,4 @@
-# FlowLint GitHub App
+﻿# FlowLint GitHub App
 
 GitHub App that reviews PRs containing n8n workflow files. When a pull request changes workflow files, FlowLint parses them, applies lint rules, and posts a Check Run with findings.
 
@@ -33,15 +33,15 @@ Use Docker Compose:
 docker compose -f infra/docker-compose.prod.yml up -d
 ```
 
-## Integration with @flowlint/core
+## Integration with @replikanti/flowlint-core
 
-This app uses `@flowlint/core` for:
+This app uses `@replikanti/flowlint-core` for:
 - Parsing n8n workflows
 - Running linting rules
 - Generating findings
 
 ```typescript
-import { parseN8n, runAllRules, loadConfig } from '@flowlint/core';
+import { parseN8n, runAllRules, loadConfig } from '@replikanti/flowlint-core';
 
 const workflow = parseN8n(fileContent);
 const findings = runAllRules(workflow, { path: file.path, cfg: config });
