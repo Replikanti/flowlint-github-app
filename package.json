@@ -27,7 +27,7 @@
         "@opentelemetry/semantic-conventions": "^1.38.0",
         "@replikanti/flowlint-core": "^0.7.0",
         "bullmq": "^5.0.0",
-        "dotenv": "^16.4.0",
+        "dotenv": "^17.0.0",
         "express": "^4.22.1",
         "express-rate-limit": "^8.2.1",
         "octokit": "^4.0.0",
