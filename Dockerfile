@@ -22,8 +22,6 @@ RUN npm ci && npm cache clean --force
 COPY tsconfig.json ./
 COPY apps ./apps
 COPY packages ./packages
-COPY types ./types
-COPY scripts ./scripts
 
 # Compile TypeScript to JavaScript
 RUN npm run build
