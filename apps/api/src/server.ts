@@ -25,7 +25,7 @@ import {
   propagation,
   context,
   recordSpanException,
-} from 'packages/tracing';
+} from '../../../packages/tracing/exports';
 import openapiSpec from './openapi.json';
 
 const app = express();

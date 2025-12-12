@@ -3,7 +3,7 @@
  * Instruments GitHub API calls with OpenTelemetry spans
  */
 
-import { withClientSpan, SpanNames } from './index';
+import { withClientSpan, SpanNames } from './exports';
 import type { Span } from '@opentelemetry/api';
 
 /**
