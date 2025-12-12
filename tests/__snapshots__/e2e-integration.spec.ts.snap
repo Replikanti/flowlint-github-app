@@ -1,0 +1,21 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`E2E Integration Tests > Snapshot Testing: Check Run payloads > generates consistent Check Run output for a valid workflow 1`] = `
+{
+  "conclusion": "success",
+  "output": {
+    "summary": "0 must-fix, 0 should-fix, 1 nit.",
+    "title": "FlowLint findings",
+  },
+}
+`;
+
+exports[`E2E Integration Tests > Snapshot Testing: Check Run payloads > generates consistent Check Run output for critical violations 1`] = `
+{
+  "conclusion": "failure",
+  "output": {
+    "summary": "1 must-fix, 0 should-fix, 0 nit.",
+    "title": "FlowLint findings",
+  },
+}
+`;
