@@ -1,0 +1,27 @@
+{
+  "action": "synchronize",
+  "number": 123,
+  "pull_request": {
+    "number": 123,
+    "state": "open",
+    "title": "Test PR for observability metrics",
+    "head": {
+      "sha": "def456abc789012345678901234567890123abcd",
+      "ref": "feature/test-branch"
+    },
+    "base": {
+      "sha": "main789abc012345678901234567890123456789",
+      "ref": "main"
+    }
+  },
+  "repository": {
+    "full_name": "test-org/test-repo",
+    "name": "test-repo",
+    "owner": {
+      "login": "test-org"
+    }
+  },
+  "installation": {
+    "id": 12345
+  }
+}

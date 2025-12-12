@@ -1,0 +1,45 @@
+# Expected Prometheus Metrics Format
+# This file documents the expected format of the /metrics endpoint
+
+# HELP flowlint_webhook_received_total Total number of webhooks received
+# TYPE flowlint_webhook_received_total counter
+flowlint_webhook_received_total{event_type="pull_request",action="opened"} 1
+
+# HELP flowlint_jobs_queued_total Total number of jobs queued
+# TYPE flowlint_jobs_queued_total counter
+flowlint_jobs_queued_total{repo="test-org/test-repo"} 1
+
+# HELP flowlint_job_duration_seconds Job processing duration in seconds
+# TYPE flowlint_job_duration_seconds histogram
+flowlint_job_duration_seconds_bucket{repo="test-org/test-repo",le="0.1"} 0
+flowlint_job_duration_seconds_bucket{repo="test-org/test-repo",le="0.5"} 1
+flowlint_job_duration_seconds_bucket{repo="test-org/test-repo",le="1"} 1
+flowlint_job_duration_seconds_bucket{repo="test-org/test-repo",le="5"} 1
+flowlint_job_duration_seconds_bucket{repo="test-org/test-repo",le="10"} 1
+flowlint_job_duration_seconds_bucket{repo="test-org/test-repo",le="+Inf"} 1
+flowlint_job_duration_seconds_sum{repo="test-org/test-repo"} 0.25
+flowlint_job_duration_seconds_count{repo="test-org/test-repo"} 1
+
+# HELP flowlint_queue_depth Current queue depth by state
+# TYPE flowlint_queue_depth gauge
+flowlint_queue_depth{state="waiting"} 0
+flowlint_queue_depth{state="active"} 1
+flowlint_queue_depth{state="failed"} 0
+flowlint_queue_depth{state="completed"} 0
+
+# HELP flowlint_github_api_calls_total Total GitHub API calls
+# TYPE flowlint_github_api_calls_total counter
+flowlint_github_api_calls_total{method="GET",status="200"} 3
+
+# HELP flowlint_findings_generated_total Total findings generated
+# TYPE flowlint_findings_generated_total counter
+flowlint_findings_generated_total{rule="rate_limit_retry",severity="must"} 1
+
+# HELP http_request_duration_seconds HTTP request latency in seconds
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{method="POST",route="/webhooks/github",status="200",le="0.005"} 0
+http_request_duration_seconds_bucket{method="POST",route="/webhooks/github",status="200",le="0.01"} 0
+http_request_duration_seconds_bucket{method="POST",route="/webhooks/github",status="200",le="0.05"} 1
+http_request_duration_seconds_bucket{method="POST",route="/webhooks/github",status="200",le="+Inf"} 1
+http_request_duration_seconds_sum{method="POST",route="/webhooks/github",status="200"} 0.025
+http_request_duration_seconds_count{method="POST",route="/webhooks/github",status="200"} 1
