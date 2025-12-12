@@ -78,7 +78,7 @@ services:
       - tempo
 
   tempo:
-    image: grafana/tempo:latest@sha256:b2cc3f87ecc5b53f646006eca0d85587394ff55661207c2f368a627ed8b10447
+    image: grafana/tempo:latest@sha256:1dc8a99475d1cf1553e3ffe7e2dda693f69e958167e0855cf531918b52572320
     container_name: flowlint-tempo
     command:
       - "-config.file=/etc/tempo.yaml"
