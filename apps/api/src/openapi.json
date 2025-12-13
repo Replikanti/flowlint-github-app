@@ -6,11 +6,11 @@
     "description": "FlowLint is a GitHub App that performs static analysis on n8n workflow JSON files in pull requests. It parses workflow files, applies configurable lint rules, and reports findings via GitHub Check Runs with annotations.",
     "contact": {
       "name": "FlowLint Support",
-      "url": "https://github.com/Replikanti/flowlint-app"
+      "url": "https://github.com/Replikanti/flowlint-github-app"
     },
     "license": {
       "name": "MIT",
-      "url": "https://github.com/Replikanti/flowlint-app/blob/main/LICENSE"
+      "url": "https://github.com/Replikanti/flowlint-github-app/blob/main/LICENSE"
     }
   },
   "servers": [
