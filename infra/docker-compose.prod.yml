@@ -56,12 +56,6 @@ services:
     depends_on:
       tempo-init:
         condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-S", "http://localhost:3200/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
   api:
     image: ghcr.io/replikanti/flowlint-backend:latest
@@ -84,12 +78,10 @@ services:
       - flowlint_net
     ports:
       - '127.0.0.1:18080:8080'
-    restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
-      tempo:
-        condition: service_healthy
+      - tempo
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -119,8 +111,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      tempo:
-        condition: service_healthy
+      - tempo
 
   prometheus:
     image: ghcr.io/replikanti/flowlint-prometheus:latest
