@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.0](https://github.com/Replikanti/flowlint-github-app/compare/v1.0.0...v1.1.0) (2025-12-14)
+
+
+### Features
+
+* upgrade backend release process and infrastructure ([b4aeec7](https://github.com/Replikanti/flowlint-github-app/commit/b4aeec7b15c182328252ee9ce1e95e13dc2175fc))
+
+
+### Bug Fixes
+
+* **backend:** fix remaining absolute package imports in server.ts ([1e15942](https://github.com/Replikanti/flowlint-github-app/commit/1e159426533a17a9ed87036de9654c269b5e0aef))
+* **backend:** replace absolute package imports with relative paths to fix runtime module resolution ([d10a51a](https://github.com/Replikanti/flowlint-github-app/commit/d10a51a0e55821a90fe1c1a374efd7cda0e0a660))
+* **ci:** make AI release filter strictly remove chores and ci spam ([2b263ba](https://github.com/Replikanti/flowlint-github-app/commit/2b263bad39d7750cb7ec0508831c9f57c7450fa8))
+* **ci:** trigger docker deploy via workflow dispatch after release ([eadac14](https://github.com/Replikanti/flowlint-github-app/commit/eadac144fa26ddaa626a3bae84caf7cdc395811c))
+* **ci:** use PAT for release creation to trigger docker workflow ([f7c29c7](https://github.com/Replikanti/flowlint-github-app/commit/f7c29c7229d9d6561683aa9598ec2a15ccbfa5ab))
+
 ## 1.0.0 (2025-12-14)
 
 
