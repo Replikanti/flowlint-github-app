@@ -1,3 +1,3 @@
-FROM prom/prometheus:v3.0.0@sha256:3b9b2a15d376334da8c286d995777d3b9315aa666d2311170ada6059a517b74f
+FROM prom/prometheus:v3.8.0@sha256:d936808bdea528155c0154a922cd42fd75716b8bb7ba302641350f9f3eaeba09
 COPY prometheus.yml /etc/prometheus/prometheus.yml
 COPY alert_rules.yml /etc/prometheus/alert_rules.yml
