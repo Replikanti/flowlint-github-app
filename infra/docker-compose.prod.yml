@@ -9,7 +9,6 @@ volumes:
   flowlint_redis_data:
   flowlint_prometheus_data:
   flowlint_grafana_data:
-  flowlint_tempo_data:
 
 services:
   redis:
@@ -39,11 +38,7 @@ services:
       PORT: 8080
       REDIS_URL: redis://flowlint-redis:6379
       TRUST_PROXY: '1'
-      OTEL_SERVICE_NAME: flowlint-api
-      OTEL_EXPORTER: otlp-http
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://flowlint-tempo:4318/v1/traces
-      OTEL_TRACES_SAMPLER: parentbased_traceidratio
-      OTEL_TRACES_SAMPLER_ARG: '0.1'
+      OTEL_SDK_DISABLED: 'true'
     networks:
       - flowlint_net
     ports:
@@ -51,8 +46,6 @@ services:
     restart: unless-stopped
     depends_on:
       redis:
-        condition: service_healthy
-      tempo:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
@@ -71,11 +64,7 @@ services:
     environment:
       NODE_ENV: production
       REDIS_URL: redis://flowlint-redis:6379
-      OTEL_SERVICE_NAME: flowlint-worker
-      OTEL_EXPORTER: otlp-http
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://flowlint-tempo:4318/v1/traces
-      OTEL_TRACES_SAMPLER: parentbased_traceidratio
-      OTEL_TRACES_SAMPLER_ARG: '0.1'
+      OTEL_SDK_DISABLED: 'true'
     networks:
       - flowlint_net
     restart: unless-stopped
@@ -83,50 +72,11 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      tempo:
-        condition: service_healthy
 
-  tempo:
-    image: ghcr.io/replikanti/flowlint-tempo:latest@sha256:3f289e73b106ae3e05707ccb9018badd6f45fa680b91cc26bc1f34c2430b5813
-    container_name: flowlint-tempo
-    pull_policy: always
-    command:
-      - "-config.file=/etc/tempo.yaml"
-      - "-target=all"
-    volumes:
-      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
-      - flowlint_tempo_data:/var/lib/tempo
-    networks:
-      - flowlint_net
-    restart: unless-stopped
-    init: true # Use tini as init process to handle signals and ensure proper cleanup
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3200/metrics"] # Tempo's default HTTP metrics endpoint
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-
-  prometheus:
-    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:9dde2ccecab4834ef24b106cac5e162b4a24b9e6eff99b8296a329bad846fd8a
-    container_name: flowlint-prometheus
-    pull_policy: always
-    restart: unless-stopped
-    volumes:
-      - flowlint_prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=30d'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    networks:
-      - flowlint_net
     ports:
       - '127.0.0.1:9090:9090'
     depends_on:
       - api
-      - tempo
 
   grafana:
     image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:348f69ec88dced1f1ca76b910ff8e292c71b4d53d663c8590216a63a9e49c2e6
@@ -149,4 +99,3 @@ services:
       - '127.0.0.1:3000:3000'
     depends_on:
       - prometheus
-      - tempo
