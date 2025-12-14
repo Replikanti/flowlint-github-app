@@ -99,6 +99,7 @@ services:
     networks:
       - flowlint_net
     restart: unless-stopped
+    user: "0:0" # Run as root to create data dirs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3200/metrics"] # Tempo's default HTTP metrics endpoint
       interval: 10s
