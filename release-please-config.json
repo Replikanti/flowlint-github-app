@@ -1,8 +1,1 @@
-{
-  "packages": {
-    ".": {
-      "release-type": "node",
-      "package-name": "flowlint-github-app"
-    }
-  }
-}
+{"packages":{"":{"release-type":"node","package-name":"flowlint-github-app"}}}
