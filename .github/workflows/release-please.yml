@@ -54,27 +54,8 @@ jobs:
 
       - name: Trigger Docker Build & Deploy
         if: ${{ steps.release.outputs.release_created }}
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4
         with:
-          github-token: ${{ secrets.AUTO_APPROVE_PAT }}
-          script: |
-            const tagName = '${{ steps.release.outputs.tag_name }}';
-            console.log(`Triggering docker.yml for tag: ${tagName}`);
-            
-            if (!tagName) {
-              core.setFailed('Tag name is empty, cannot trigger deployment.');
-              return;
-            }
-
-            try {
-              await github.rest.actions.createWorkflowDispatch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: 'docker.yml',
-                ref: tagName
-              });
-              console.log('Workflow dispatched successfully.');
-            } catch (error) {
-              console.error('Failed to dispatch workflow:', error);
-              core.setFailed(error.message);
-            }
+          token: ${{ secrets.AUTO_APPROVE_PAT }}
+          event-type: deploy-release
+          client-payload: '{"tag_name": "${{ steps.release.outputs.tag_name }}"}'
