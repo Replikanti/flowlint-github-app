@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0 (2025-12-14)
+
+
+### Features
+
+* force release of backend infrastructure fixes ([928ae7e](https://github.com/Replikanti/flowlint-github-app/commit/928ae7e36320916877c9aef6b0051e03f20e544b))
+* re-trigger release to test docker deployment ([cf91012](https://github.com/Replikanti/flowlint-github-app/commit/cf91012c5cfac48e29ede94445b930e90d75d292))
+* upgrade backend release process and infrastructure ([b4aeec7](https://github.com/Replikanti/flowlint-github-app/commit/b4aeec7b15c182328252ee9ce1e95e13dc2175fc))
+
+
+### Bug Fixes
+
+* force release update to trigger AI gate refresh ([344bdbf](https://github.com/Replikanti/flowlint-github-app/commit/344bdbf0cb47d364a0f7f5609bf4db11f3e8fdf2))
+
 ## [1.19.0](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.18.0...flowlint-github-app-v1.19.0) (2025-12-14)
 
 
