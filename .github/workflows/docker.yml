@@ -84,9 +84,6 @@ jobs:
             # Pull latest infra configs
             git pull origin main
             
-            # Login to GHCR to pull private images (works for public too)
-            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ secrets.CR_USER }} --password-stdin
-            
             # Deploy new images
             echo "Deploying new Docker images..."
             docker compose -f infra/docker-compose.prod.yml pull
