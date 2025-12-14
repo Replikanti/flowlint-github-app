@@ -42,7 +42,7 @@
         "@types/micromatch": "4.0.10",
         "@types/node": "24.10.3",
         "@types/swagger-ui-express": "4.1.8",
-        "openai": "^6.10.0",
+        "openai": "6.10.0",
         "ts-node": "10.9.2",
         "typescript": "5.9.3",
         "vitest": "4.0.15"
