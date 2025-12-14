@@ -83,12 +83,6 @@ jobs:
             # Pull latest infra configs
             git pull origin main
             
-            # Update Nginx config
-            echo "Updating Nginx configuration..."
-            sudo cp infra/nginx/production.conf /etc/nginx/sites-available/api.flowlint.dev
-            sudo ln -sf /etc/nginx/sites-available/api.flowlint.dev /etc/nginx/sites-enabled/
-            sudo nginx -t && sudo systemctl reload nginx
-            
             # Deploy new images
             echo "Deploying new Docker images..."
             docker compose -f infra/docker-compose.prod.yml pull
