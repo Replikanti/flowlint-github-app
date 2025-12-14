@@ -1,5 +1,6 @@
+import { Router } from 'express';
+import { logger } from '../../../packages/logger';
 import { getReviewQueue } from './queue';
-import { logger } from 'packages/logger';
 
 export type HealthStatus = 'ok' | 'degraded' | 'error';
 
