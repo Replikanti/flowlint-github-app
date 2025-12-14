@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/Replikanti/flowlint-github-app/compare/v1.0.0...v1.0.1) (2025-12-14)
+
+
+### Bug Fixes
+
+* **ci:** make AI release filter strictly remove chores and ci spam ([2b263ba](https://github.com/Replikanti/flowlint-github-app/commit/2b263bad39d7750cb7ec0508831c9f57c7450fa8))
+* **ci:** use PAT for release creation to trigger docker workflow ([f7c29c7](https://github.com/Replikanti/flowlint-github-app/commit/f7c29c7229d9d6561683aa9598ec2a15ccbfa5ab))
+
 ## 1.0.0 (2025-12-14)
 
 
