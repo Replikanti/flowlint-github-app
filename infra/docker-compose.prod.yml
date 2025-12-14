@@ -108,7 +108,7 @@ services:
       start_period: 20s
 
   prometheus:
-    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:77c5b6d274cea8d7270d4d69fb084cb33560d157c0685263eaf8549847fa84f9
+    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:9dde2ccecab4834ef24b106cac5e162b4a24b9e6eff99b8296a329bad846fd8a
     container_name: flowlint-prometheus
     pull_policy: always
     restart: unless-stopped
