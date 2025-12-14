@@ -15,6 +15,7 @@ describe('Health Check', () => {
   it('returns ok status when all checks pass', async () => {
     // Mock queue with healthy Redis and low job count
     const mockQueue = {
+      waitUntilReady: vi.fn().mockResolvedValue(true),
       client: {
         ping: vi.fn().mockResolvedValue('PONG'),
       },
@@ -37,6 +38,7 @@ describe('Health Check', () => {
 
   it('returns degraded status when queue has many waiting jobs', async () => {
     const mockQueue = {
+      waitUntilReady: vi.fn().mockResolvedValue(true),
       client: {
         ping: vi.fn().mockResolvedValue('PONG'),
       },
@@ -56,6 +58,7 @@ describe('Health Check', () => {
 
   it('returns error status when Redis is down', async () => {
     const mockQueue = {
+      waitUntilReady: vi.fn().mockResolvedValue(true),
       client: {
         ping: vi.fn().mockRejectedValue(new Error('Connection refused')),
       },
@@ -75,6 +78,7 @@ describe('Health Check', () => {
 
   it('returns error status when queue check fails', async () => {
     const mockQueue = {
+      waitUntilReady: vi.fn().mockResolvedValue(true),
       client: {
         ping: vi.fn().mockResolvedValue('PONG'),
       },
@@ -94,6 +98,7 @@ describe('Health Check', () => {
 
   it('measures Redis latency', async () => {
     const mockQueue = {
+      waitUntilReady: vi.fn().mockResolvedValue(true),
       client: {
         ping: vi.fn().mockImplementation(() => {
           return new Promise((resolve) => setTimeout(() => resolve('PONG'), 50));
