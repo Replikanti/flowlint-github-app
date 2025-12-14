@@ -52,6 +52,16 @@ jobs:
             echo "No PR branch found in output."
           fi
 
+      - name: Polish Release Notes
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.release.outputs.tag_name }}
+        run: |
+          npm install openai @octokit/rest tsx
+          npx tsx scripts/polish-release-notes.ts
+
       - name: Trigger Docker Build & Deploy
         if: ${{ steps.release.outputs.release_created }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
