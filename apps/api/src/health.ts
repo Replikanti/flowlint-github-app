@@ -49,11 +49,11 @@ async function checkRedis(): Promise<HealthCheck> {
   try {
     const start = Date.now();
     const queue = getReviewQueue();
-    await queue.isReady(); // Wait for queue client to be ready
-    const client = queue.client;
-    // Client can be undefined if queue is not connected (even after isReady)
+    await queue.waitUntilReady(); // Wait for queue client to be ready
+    const client = await queue.client; // Get the actual Redis client instance
+    
     if (!client) {
-      throw new Error("Redis client not connected after isReady");
+      throw new Error("Redis client not available after readiness check");
     }
     await client.ping();
     const latency = Date.now() - start;
