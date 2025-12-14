@@ -9,7 +9,7 @@ import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import type { Request, Response, NextFunction } from 'express';
 import { enqueueReview, getReviewQueue } from './queue';
-import { logger, createCorrelatedLogger } from 'packages/logger';
+import { logger, createCorrelatedLogger } from '../../../packages/logger';
 import { checkHealth } from './health';
 import {
   metricsMiddleware,
@@ -17,7 +17,7 @@ import {
   getContentType,
   webhookCounter,
   startQueueMetricsCollector,
-} from 'packages/observability';
+} from '../../../packages/observability';
 import {
   withServerSpan,
   withSpan,
