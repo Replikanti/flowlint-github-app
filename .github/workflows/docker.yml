@@ -108,14 +108,20 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            set -e
+            set -ex
             cd ${{ secrets.DEPLOY_PATH }}
             
-            # Pull latest infra configs
+            echo "--- Verifying Deployment Path ---"
+            pwd
+            ls -la
+            echo "--- Pulling Latest Code ---"
             git pull origin main
             
-            # Deploy new images
-            echo "Deploying new Docker images..."
+            echo "--- Verifying Infra Files ---"
+            ls -la infra/
+            cat infra/docker-compose.prod.yml
+            
+            echo "--- Deploying New Docker Images ---"
             docker compose -f infra/docker-compose.prod.yml pull
             docker compose -f infra/docker-compose.prod.yml up -d
             

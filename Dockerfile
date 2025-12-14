@@ -72,4 +72,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 
 # Default command (can be overridden in docker-compose)
 # Use --init flag for proper signal handling and zombie process reaping
-CMD ["node", "--init", "dist/apps/api/src/server.js"]
+CMD ["node", "dist/apps/api/src/server.js"]
