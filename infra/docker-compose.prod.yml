@@ -23,7 +23,7 @@ services:
       - flowlint_net
 
   api:
-    image: ghcr.io/replikanti/flowlint-github-app-api:latest
+    image: ghcr.io/replikanti/flowlint-backend:latest
     container_name: flowlint-api
     pull_policy: always
     command: node --init dist/apps/api/src/server.js
@@ -55,7 +55,7 @@ services:
       retries: 3
 
   worker:
-    image: ghcr.io/replikanti/flowlint-github-app-worker:latest
+    image: ghcr.io/replikanti/flowlint-backend:latest
     container_name: flowlint-worker
     pull_policy: always
     command: node --init dist/apps/worker/src/worker.js
@@ -78,12 +78,12 @@ services:
       - tempo
 
   tempo:
-    image: grafana/tempo:latest@sha256:b3a8586124d7eaa10acc383570fbacfba4affce8c9ec6a76ec5ce3b9f4e37f6e
+    image: ghcr.io/replikanti/flowlint-tempo:latest
     container_name: flowlint-tempo
+    pull_policy: always
     command:
       - "-config.file=/etc/tempo.yaml"
     volumes:
-      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
       - flowlint_tempo_data:/tmp/tempo
     ports:
       - '127.0.0.1:3200:3200'
@@ -94,12 +94,11 @@ services:
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:v3.8.0@sha256:d936808bdea528155c0154a922cd42fd75716b8bb7ba302641350f9f3eaeba09
+    image: ghcr.io/replikanti/flowlint-prometheus:latest
     container_name: flowlint-prometheus
+    pull_policy: always
     restart: unless-stopped
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
       - flowlint_prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -116,12 +115,12 @@ services:
       - tempo
 
   grafana:
-    image: grafana/grafana:12.3.0@sha256:70d9599b186ce287be0d2c5ba9a78acb2e86c1a68c9c41449454d0fc3eeb84e8
+    image: ghcr.io/replikanti/flowlint-grafana:latest
     container_name: flowlint-grafana
+    pull_policy: always
     restart: unless-stopped
     volumes:
       - flowlint_grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
