@@ -52,7 +52,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      - tempo
+      tempo:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -82,7 +83,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      - tempo
+      tempo:
+        condition: service_healthy
 
   tempo:
     image: ghcr.io/replikanti/flowlint-tempo:latest@sha256:3f289e73b106ae3e05707ccb9018badd6f45fa680b91cc26bc1f34c2430b5813
@@ -94,13 +96,15 @@ services:
     volumes:
       - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
       - flowlint_tempo_data:/var/lib/tempo
-    ports:
-      - '127.0.0.1:3200:3200'
-      - '127.0.0.1:4318:4318'
-      - '127.0.0.1:4317:4317'
     networks:
       - flowlint_net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3200/metrics"] # Tempo's default HTTP metrics endpoint
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   prometheus:
     image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:77c5b6d274cea8d7270d4d69fb084cb33560d157c0685263eaf8549847fa84f9
