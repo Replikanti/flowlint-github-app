@@ -38,6 +38,7 @@
         "yaml": "^2.4.0"
     },
     "devDependencies": {
+        "@octokit/rest": "^22.0.1",
         "@types/express": "4.17.25",
         "@types/micromatch": "4.0.10",
         "@types/node": "24.10.3",
