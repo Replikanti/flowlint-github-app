@@ -9,6 +9,7 @@ volumes:
   flowlint_redis_data:
   flowlint_prometheus_data:
   flowlint_grafana_data:
+  flowlint_tempo_data:
 
 services:
   redis:
@@ -26,8 +27,44 @@ services:
     networks:
       - flowlint_net
 
+  tempo-init:
+    image: alpine:latest
+    user: root
+    command: sh -c "mkdir -p /var/lib/tempo/wal /var/lib/tempo/blocks && chown -R 10001:10001 /var/lib/tempo && chmod -R 755 /var/lib/tempo"
+    volumes:
+      - flowlint_tempo_data:/var/lib/tempo
+    networks:
+      - flowlint_net
+
+  tempo:
+    image: ghcr.io/replikanti/flowlint-tempo:latest
+    container_name: flowlint-tempo
+    pull_policy: always
+    command:
+      - "-config.file=/etc/tempo.yaml"
+      - "-target=all"
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - flowlint_tempo_data:/var/lib/tempo
+    ports:
+      - '127.0.0.1:3200:3200'
+      - '127.0.0.1:4318:4318'
+      - '127.0.0.1:4317:4317'
+    networks:
+      - flowlint_net
+    restart: unless-stopped
+    depends_on:
+      tempo-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-S", "http://localhost:3200/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   api:
-    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:dd6535823142b065f8c2d1e23ec6a11631788ff1a0b3b193295ca04c99816e44
+    image: ghcr.io/replikanti/flowlint-backend:latest
     container_name: flowlint-api
     pull_policy: always
     command: node dist/apps/api/src/server.js
@@ -38,7 +75,11 @@ services:
       PORT: 8080
       REDIS_URL: redis://flowlint-redis:6379
       TRUST_PROXY: '1'
-      OTEL_SDK_DISABLED: 'true'
+      OTEL_SERVICE_NAME: flowlint-api
+      OTEL_EXPORTER: otlp-http
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://flowlint-tempo:4318/v1/traces
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: '0.1'
     networks:
       - flowlint_net
     ports:
@@ -46,6 +87,8 @@ services:
     restart: unless-stopped
     depends_on:
       redis:
+        condition: service_healthy
+      tempo:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
@@ -55,7 +98,7 @@ services:
       retries: 3
 
   worker:
-    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:dd6535823142b065f8c2d1e23ec6a11631788ff1a0b3b193295ca04c99816e44
+    image: ghcr.io/replikanti/flowlint-backend:latest
     container_name: flowlint-worker
     pull_policy: always
     command: node dist/apps/worker/src/worker.js
@@ -64,7 +107,11 @@ services:
     environment:
       NODE_ENV: production
       REDIS_URL: redis://flowlint-redis:6379
-      OTEL_SDK_DISABLED: 'true'
+      OTEL_SERVICE_NAME: flowlint-worker
+      OTEL_EXPORTER: otlp-http
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://flowlint-tempo:4318/v1/traces
+      OTEL_TRACES_SAMPLER: parentbased_traceidratio
+      OTEL_TRACES_SAMPLER_ARG: '0.1'
     networks:
       - flowlint_net
     restart: unless-stopped
@@ -72,19 +119,38 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      tempo:
+        condition: service_healthy
 
+  prometheus:
+    image: ghcr.io/replikanti/flowlint-prometheus:latest
+    container_name: flowlint-prometheus
+    pull_policy: always
+    restart: unless-stopped
+    volumes:
+      - flowlint_prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - flowlint_net
     ports:
       - '127.0.0.1:9090:9090'
     depends_on:
       - api
+      - tempo
 
   grafana:
-    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:348f69ec88dced1f1ca76b910ff8e292c71b4d53d663c8590216a63a9e49c2e6
+    image: ghcr.io/replikanti/flowlint-grafana:latest
     container_name: flowlint-grafana
     pull_policy: always
     restart: unless-stopped
     volumes:
       - flowlint_grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
@@ -99,3 +165,4 @@ services:
       - '127.0.0.1:3000:3000'
     depends_on:
       - prometheus
+      - tempo
