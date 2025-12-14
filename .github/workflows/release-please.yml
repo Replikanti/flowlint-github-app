@@ -17,8 +17,9 @@ jobs:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4
         id: release
         with:
-          release-type: node
-          package-name: "flowlint-github-app"
+          token: ${{ secrets.AUTO_APPROVE_PAT }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
 
       - name: Generate Token
         if: ${{ steps.release.outputs.release_created }}
