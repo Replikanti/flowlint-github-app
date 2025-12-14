@@ -42,8 +42,8 @@ jobs:
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: |
-            ${{ env.REGISTRY }}/replikanti/flowlint-api
-            ${{ env.REGISTRY }}/replikanti/flowlint-worker
+            ${{ env.REGISTRY }}/${{ github.repository }}-api
+            ${{ env.REGISTRY }}/${{ github.repository }}-worker
           tags: |
             type=ref,event=branch
             type=ref,event=pr
