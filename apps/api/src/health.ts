@@ -48,15 +48,21 @@ export async function checkHealth(): Promise<HealthResponse> {
 async function checkRedis(): Promise<HealthCheck> {
   try {
     const start = Date.now();
-    const queue = getReviewQueue() as any; // BullMQ Queue has client property at runtime
-    await queue.client.ping();
+    const queue = getReviewQueue();
+    await queue.isReady(); // Wait for queue client to be ready
+    const client = queue.client;
+    // Client can be undefined if queue is not connected (even after isReady)
+    if (!client) {
+      throw new Error("Redis client not connected after isReady");
+    }
+    await client.ping();
     const latency = Date.now() - start;
 
-    return { status: 'ok', latency };
+    return { status: "ok", latency };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    logger.warn({ error: errorMsg }, 'redis health check failed');
-    return { status: 'error', error: errorMsg };
+    logger.warn({ error: errorMsg }, "redis health check failed");
+    return { status: "error", error: errorMsg };
   }
 }
 

@@ -99,7 +99,7 @@ services:
     networks:
       - flowlint_net
     restart: unless-stopped
-    user: "0:0" # Run as root to create data dirs
+    init: true # Use tini as init process to handle signals and ensure proper cleanup
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3200/metrics"] # Tempo's default HTTP metrics endpoint
       interval: 10s
