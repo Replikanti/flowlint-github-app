@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.5.0...flowlint-github-app-v1.5.1) (2025-12-14)
+
+
+### Bug Fixes
+
+* **ci:** remove nginx config update from deploy flow ([4140e18](https://github.com/Replikanti/flowlint-github-app/commit/4140e1856c863ac1d405312e276829e85fd1a98f))
+* **deps:** update @replikanti/flowlint-core to ^0.8.0 ([6b5068b](https://github.com/Replikanti/flowlint-github-app/commit/6b5068be2529674e0c0dc09fb30f2ae7e5520f46))
+
 ## [1.5.0](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.4.0...flowlint-github-app-v1.5.0) (2025-12-14)
 
 
