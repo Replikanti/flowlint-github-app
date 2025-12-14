@@ -26,7 +26,7 @@ services:
     image: ghcr.io/replikanti/flowlint-backend:latest
     container_name: flowlint-api
     pull_policy: always
-    command: node --init dist/apps/api/src/server.js
+    command: node dist/apps/api/src/server.js
     env_file:
       - ../.env
     environment:
@@ -58,7 +58,7 @@ services:
     image: ghcr.io/replikanti/flowlint-backend:latest
     container_name: flowlint-worker
     pull_policy: always
-    command: node --init dist/apps/worker/src/worker.js
+    command: node dist/apps/worker/src/worker.js
     env_file:
       - ../.env
     environment:
@@ -83,8 +83,10 @@ services:
     pull_policy: always
     command:
       - "-config.file=/etc/tempo.yaml"
+      - "-target=all"
     volumes:
-      - flowlint_tempo_data:/tmp/tempo
+      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - flowlint_tempo_data:/var/lib/tempo
     ports:
       - '127.0.0.1:3200:3200'
       - '127.0.0.1:4318:4318'
