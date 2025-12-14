@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.4.0...flowlint-github-app-v1.5.0) (2025-12-14)
+
+
+### Features
+
+* test new docker dispatch mechanism ([6b3d7c4](https://github.com/Replikanti/flowlint-github-app/commit/6b3d7c42373cde96ae10b1b17eae0a3619c46d47))
+
+
+### Bug Fixes
+
+* **ci:** trigger docker deploy via repository_dispatch instead of workflow_dispatch ([f9ca158](https://github.com/Replikanti/flowlint-github-app/commit/f9ca158bca931a1ef5bb7f505b0fe7fa4d243985))
+
 ## [1.4.0](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.3.0...flowlint-github-app-v1.4.0) (2025-12-14)
 
 
