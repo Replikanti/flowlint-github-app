@@ -47,7 +47,7 @@ jobs:
           BRANCH=$(echo "$PR_JSON" | jq -r .headBranchName)
           if [ -n "$BRANCH" ] && [ "$BRANCH" != "null" ]; then
             echo "Triggering AI Gate for branch $BRANCH"
-            gh workflow run ai-release-gate.yml --ref "$BRANCH"
+            gh workflow run ai-release-gate.yml --ref "$BRANCH" -R ${{ github.repository }}
           else
             echo "No PR branch found in output."
           fi
