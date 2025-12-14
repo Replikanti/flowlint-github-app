@@ -17,7 +17,6 @@ jobs:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4
         id: release
         with:
-          token: ${{ secrets.AUTO_APPROVE_PAT }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
@@ -43,7 +42,6 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
-          github-token: ${{ secrets.AUTO_APPROVE_PAT }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
