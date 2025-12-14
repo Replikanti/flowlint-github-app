@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.0](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.2.0...flowlint-github-app-v1.3.0) (2025-12-14)
+
+
+### Features
+
+* **ci:** add AI polish step to release-please workflow ([cc455fb](https://github.com/Replikanti/flowlint-github-app/commit/cc455fb3d20e2015fd3fb31a33acc6025d7ea1e3))
+* **ci:** add script to polish release notes with AI ([ec822c6](https://github.com/Replikanti/flowlint-github-app/commit/ec822c683cc0a3560a6b3823a8c5bd1041102482))
+
+
+### Bug Fixes
+
+* **ci:** add checkout step before running polish script ([8ff2058](https://github.com/Replikanti/flowlint-github-app/commit/8ff2058bfc1c9f8adc46f2ce706ed364cc1377db))
+* **ci:** remove obsolete ai release gate trigger from release workflow ([bce8c3c](https://github.com/Replikanti/flowlint-github-app/commit/bce8c3c29ef48a64b28f6c25bdf8631f4773397b))
+* **deps:** add @octokit/rest to devDependencies for release polish script ([a25dbb3](https://github.com/Replikanti/flowlint-github-app/commit/a25dbb3bbca962353f5de566f9f6277b78ce5caa))
+* **types:** fix typescript error in release polish script ([3354d44](https://github.com/Replikanti/flowlint-github-app/commit/3354d445e131d96c84b959ff7935ff3ece08a6d6))
+
 ## 1.0.0 (2025-12-14)
 
 
