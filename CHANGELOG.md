@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.3.0...flowlint-github-app-v1.3.1) (2025-12-14)
+
+
+### Bug Fixes
+
+* **ci:** add logging to docker trigger script ([ee6f65f](https://github.com/Replikanti/flowlint-github-app/commit/ee6f65f32c8fd712ad815ffbfa4e788cbe0a15ab))
+
 ## [1.3.0](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.2.0...flowlint-github-app-v1.3.0) (2025-12-14)
 
 
