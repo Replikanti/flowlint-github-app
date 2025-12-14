@@ -52,6 +52,10 @@ jobs:
             echo "No PR branch found in output."
           fi
 
+      - name: Checkout Code
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@v4
+
       - name: Polish Release Notes
         if: ${{ steps.release.outputs.release_created }}
         env:
