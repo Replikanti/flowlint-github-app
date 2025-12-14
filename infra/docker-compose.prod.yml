@@ -121,7 +121,6 @@ services:
     restart: unless-stopped
     volumes:
       - flowlint_grafana_data:/var/lib/grafana
-      - ./grafana/dashboard.json:/etc/grafana/provisioning/dashboards/flowlint.json:ro
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
     environment:
       - GF_SECURITY_ADMIN_USER=admin
