@@ -3,21 +3,52 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   filter-and-merge:
-    if: startsWith(github.head_ref, 'release-please--')
+    # Run only on release-please branches
+    if: startsWith(github.ref_name, 'release-please--') || startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: actions/checkout@v4
       
+      - name: Get PR Details
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Determine branch name
+          BRANCH=${{ github.head_ref || github.ref_name }}
+          # Remove 'refs/heads/' prefix if present
+          BRANCH=${BRANCH#refs/heads/}
+          
+          echo "Checking PR for branch: $BRANCH"
+          
+          PR_DATA=$(gh pr list --head "$BRANCH" --state open --json number,body --limit 1)
+          NUMBER=$(echo "$PR_DATA" | jq '.[0].number')
+          
+          if [ "$NUMBER" == "null" ] || [ -z "$NUMBER" ]; then
+            echo "No open PR found for branch $BRANCH"
+            exit 1
+          fi
+          
+          BODY=$(echo "$PR_DATA" | jq -r '.[0].body')
+          
+          echo "number=$NUMBER" >> $GITHUB_OUTPUT
+          
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "body<<$EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
       - name: Setup Node
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm install openai tsx
@@ -26,11 +57,9 @@ jobs:
         id: ai
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_BODY: ${{ steps.pr.outputs.body }}
         run: |
-          # Capture output, handling potential multiline strings
           OUTPUT=$(npx tsx scripts/ai-release-filter.ts)
-          
           echo "RAW OUTPUT LENGTH: ${#OUTPUT}"
           
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
@@ -40,22 +69,16 @@ jobs:
 
       - name: Process Result
         env:
-          GH_TOKEN: ${{ secrets.AUTO_APPROVE_PAT }} # Use PAT for actions on protected branches
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.AUTO_APPROVE_PAT }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
           RESULT: ${{ steps.ai.outputs.result }}
         run: |
           if [[ "$RESULT" == *"NO_RELEASE"* ]]; then
-            echo "No business value detected. Closing PR."
-            gh pr close $PR_NUMBER --comment "AI Release Gate: No significant business value detected in this release candidate. Closing."
+            echo "No business value detected. Closing PR #$PR_NUMBER."
+            gh pr close $PR_NUMBER --comment "AI Release Gate: No significant business value detected. Closing."
           else
-            echo "Business value detected. Updating PR description and Merging."
-            
-            # Update Description
+            echo "Business value detected. Merging PR #$PR_NUMBER."
             gh pr edit $PR_NUMBER --body "$RESULT"
-            
-            # Approve
             gh pr review $PR_NUMBER --approve
-            
-            # Enable Auto-Merge
             gh pr merge $PR_NUMBER --auto --merge
           fi

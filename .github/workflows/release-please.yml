@@ -38,6 +38,20 @@ jobs:
           event-type: flowlint-core-released
           client-payload: '{"version": "${{ steps.release.outputs.version }}", "source": "github-app"}'
 
+      - name: Trigger AI Release Gate
+        if: ${{ !steps.release.outputs.release_created }}
+        env:
+          PR_JSON: ${{ steps.release.outputs.pr }}
+          GH_TOKEN: ${{ secrets.AUTO_APPROVE_PAT }}
+        run: |
+          BRANCH=$(echo "$PR_JSON" | jq -r .headBranchName)
+          if [ -n "$BRANCH" ] && [ "$BRANCH" != "null" ]; then
+            echo "Triggering AI Gate for branch $BRANCH"
+            gh workflow run ai-release-gate.yml --ref "$BRANCH"
+          else
+            echo "No PR branch found in output."
+          fi
+
       - name: Trigger Docker Build & Deploy
         if: ${{ steps.release.outputs.release_created }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
