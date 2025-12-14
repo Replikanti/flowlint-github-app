@@ -23,7 +23,7 @@ services:
       - flowlint_net
 
   api:
-    image: ghcr.io/replikanti/flowlint-api:latest
+    image: ghcr.io/replikanti/flowlint-github-app-api:latest
     container_name: flowlint-api
     pull_policy: always
     command: node --init dist/apps/api/src/server.js
@@ -55,7 +55,7 @@ services:
       retries: 3
 
   worker:
-    image: ghcr.io/replikanti/flowlint-worker:latest
+    image: ghcr.io/replikanti/flowlint-github-app-worker:latest
     container_name: flowlint-worker
     pull_policy: always
     command: node --init dist/apps/worker/src/worker.js
