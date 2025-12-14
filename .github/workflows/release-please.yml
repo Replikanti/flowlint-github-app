@@ -58,9 +58,23 @@ jobs:
         with:
           github-token: ${{ secrets.AUTO_APPROVE_PAT }}
           script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'docker.yml',
-              ref: '${{ steps.release.outputs.tag_name }}'
-            })
+            const tagName = '${{ steps.release.outputs.tag_name }}';
+            console.log(`Triggering docker.yml for tag: ${tagName}`);
+            
+            if (!tagName) {
+              core.setFailed('Tag name is empty, cannot trigger deployment.');
+              return;
+            }
+
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'docker.yml',
+                ref: tagName
+              });
+              console.log('Workflow dispatched successfully.');
+            } catch (error) {
+              console.error('Failed to dispatch workflow:', error);
+              core.setFailed(error.message);
+            }
