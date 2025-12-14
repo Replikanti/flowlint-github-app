@@ -114,6 +114,8 @@ services:
         condition: service_healthy
       tempo:
         condition: service_started
+    healthcheck:
+      disable: true
 
   prometheus:
     image: ghcr.io/replikanti/flowlint-prometheus:latest
