@@ -3,7 +3,6 @@ version: '3.9'
 networks:
   flowlint_net:
     driver: bridge
-    internal: true
 
 volumes:
   flowlint_redis_data:
