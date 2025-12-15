@@ -27,7 +27,7 @@ services:
       - flowlint_net
 
   tempo-init:
-    image: alpine:latest
+    image: alpine:latest@sha256:51183f2cfa6320055da30872f211093f9ff1d3cf06f39a0bdb212314c5dc7375
     user: root
     command: sh -c "mkdir -p /var/lib/tempo/wal /var/lib/tempo/blocks && chown -R 10001:10001 /var/lib/tempo && chmod -R 755 /var/lib/tempo"
     volumes:
@@ -36,7 +36,7 @@ services:
       - flowlint_net
 
   tempo:
-    image: ghcr.io/replikanti/flowlint-tempo:latest
+    image: ghcr.io/replikanti/flowlint-tempo:latest@sha256:e1842a9921461da6cebceb36f0d0253e85a7899ee947e632836f2668cd968b73
     container_name: flowlint-tempo
     pull_policy: always
     command:
@@ -57,7 +57,7 @@ services:
         condition: service_completed_successfully
 
   api:
-    image: ghcr.io/replikanti/flowlint-backend:latest
+    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:ed6d8df60e64b9c204d0b1023b9ed32c154f763c3580dbc942359c1db7286bce
     container_name: flowlint-api
     pull_policy: always
     command: node dist/apps/api/src/server.js
@@ -90,7 +90,7 @@ services:
       retries: 3
 
   worker:
-    image: ghcr.io/replikanti/flowlint-backend:latest
+    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:ed6d8df60e64b9c204d0b1023b9ed32c154f763c3580dbc942359c1db7286bce
     container_name: flowlint-worker
     pull_policy: always
     command: node dist/apps/worker/src/worker.js
@@ -117,7 +117,7 @@ services:
       disable: true
 
   prometheus:
-    image: ghcr.io/replikanti/flowlint-prometheus:latest
+    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:a37749bf740cbbf123f8eabec23083d661d944af04d91530bb7c33c17c1cd947
     container_name: flowlint-prometheus
     pull_policy: always
     restart: unless-stopped
@@ -138,7 +138,7 @@ services:
       - tempo
 
   grafana:
-    image: ghcr.io/replikanti/flowlint-grafana:latest
+    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:f24f9667045f9d1c2c1dede8b42a95ee2a71e7ac5c47b9683d5ab58d296729a9
     container_name: flowlint-grafana
     pull_policy: always
     restart: unless-stopped
