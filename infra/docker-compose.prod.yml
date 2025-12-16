@@ -138,7 +138,7 @@ services:
       - tempo
 
   grafana:
-    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:64c534a5864e819eccf05ccd3650c8ee4ca8eaaaaebb98dc20eb1e50d4b550c0
+    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:6190f5fed15f9dc3b2bfa1b1442146adf5ff0089a680f0f9b443c149a3980033
     container_name: flowlint-grafana
     pull_policy: always
     restart: unless-stopped
