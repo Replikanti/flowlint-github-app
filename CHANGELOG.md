@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.1](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.6.0...flowlint-github-app-v1.6.1) (2025-12-20)
+
+
+### Bug Fixes
+
+* **ci:** enhance AI prompt to always mention core library upgrades ([22ed7e5](https://github.com/Replikanti/flowlint-github-app/commit/22ed7e544360e9a7503063785f4f79f4b62e0550))
+* **ci:** enhance AI prompt to always mention core library upgrades ([33dc914](https://github.com/Replikanti/flowlint-github-app/commit/33dc9146a6689154c4ef33554acf29748f48ae1f))
+* enable manual CI trigger and fix release PR execution ([7db1ae3](https://github.com/Replikanti/flowlint-github-app/commit/7db1ae3e086791da1e432f11364d4a5df5ba5d60))
+* enable manual CI trigger and fix release-please token to trigger CI ([c848070](https://github.com/Replikanti/flowlint-github-app/commit/c848070152999829781f211066cbc4c81b480223))
+
 ## [1.6.0](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.5.1...flowlint-github-app-v1.6.0) (2025-12-15)
 
 
