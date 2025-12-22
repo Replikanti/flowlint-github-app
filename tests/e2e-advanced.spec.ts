@@ -73,7 +73,6 @@ describe('E2E Advanced Scenarios', () => {
       // Import modules FIRST
       const githubClient = await import('../packages/github/client');
 
-      const startTime = Date.now();
       let retryAfterTime = 0;
 
       const mockOctokit = createMockOctokit(async (endpoint: string) => {
