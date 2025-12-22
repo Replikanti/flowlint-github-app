@@ -1,2 +1,2 @@
-FROM grafana/tempo:latest@sha256:95b9afe6bfa9c900cb5c1c7ad3005ecdf7a4303918134e30a7801318a1bce06a
+FROM grafana/tempo:latest@sha256:2d1abe9c98923572581173e95e894069a6fd38d577311dd6246295c9e6474025
 COPY tempo.yaml /etc/tempo.yaml
