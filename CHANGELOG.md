@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.6.3](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.6.2...flowlint-github-app-v1.6.3) (2025-12-22)
+
+
+### Bug Fixes
+
+* **app:** comprehensive cleanup and security fixes ([770d14b](https://github.com/Replikanti/flowlint-github-app/commit/770d14b2ef1a4bbf089d35270c7d9a637157e802))
+* **app:** comprehensive cleanup and security fixes ([7c27386](https://github.com/Replikanti/flowlint-github-app/commit/7c27386cc5a48793ccd865841963d17ecc14dd6e))
+* **ci:** split approve and merge steps to fix token permissions ([3c52fcf](https://github.com/Replikanti/flowlint-github-app/commit/3c52fcf4a20d69aa1fd576798bddaf18768dbb23))
+* **scripts:** restore full AI prompt and async wrapper ([f7f355d](https://github.com/Replikanti/flowlint-github-app/commit/f7f355dbebd07072fb186c216bf166170ad9bbc5))
+* **scripts:** revert top-level await to fix CI execution ([f1a56c9](https://github.com/Replikanti/flowlint-github-app/commit/f1a56c9859c4cd481aa074ca7aaafa6725ac691f))
+
 ## [1.6.2](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.6.1...flowlint-github-app-v1.6.2) (2025-12-22)
 
 
