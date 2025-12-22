@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.4](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.6.3...flowlint-github-app-v1.6.4) (2025-12-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @replikanti/flowlint-core to ^0.9.0 ([#206](https://github.com/Replikanti/flowlint-github-app/issues/206)) ([a8a2905](https://github.com/Replikanti/flowlint-github-app/commit/a8a2905eed88e79ce022f99046d931a2f1be0955))
+
 ## [1.6.3](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.6.2...flowlint-github-app-v1.6.3) (2025-12-22)
 
 
