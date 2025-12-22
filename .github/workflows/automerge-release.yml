@@ -12,10 +12,16 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-      - name: Approve and Merge
+      - name: Approve PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr review "$PR_URL" --approve
+
+      - name: Enable Auto-Merge
         env:
           GH_TOKEN: ${{ secrets.AUTO_APPROVE_PAT }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          gh pr review "$PR_URL" --approve
           gh pr merge "$PR_URL" --auto --merge
