@@ -184,7 +184,7 @@ export async function runE2ETest(options: E2ETestOptions): Promise<void> {
   
   if (targets.length === 0) {
     // Simulate worker logic for no target files
-    const result = reporterModule.buildCheckOutput({ 
+    reporterModule.buildCheckOutput({ 
       findings: [], 
       cfg,
       conclusionOverride: 'neutral'

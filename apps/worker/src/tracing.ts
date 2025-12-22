@@ -1,6 +1,4 @@
-import { initTracing, shutdownTracing } from '../../../packages/tracing/tracer';
-import { traceGitHubApiCall } from '../../../packages/tracing/github-tracer';
-import { SpanNames, getActiveContext, recordSpanException, setSpanAttributes, trace } from '../../../packages/tracing/exports';
+import { initTracing } from '../../../packages/tracing/tracer';
 
 // Initialize OpenTelemetry tracing for worker process
 export async function setupWorkerTracing(): Promise<void> {

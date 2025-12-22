@@ -169,9 +169,6 @@ function createExporter(options: {
         }),
       };
     case 'console':
-      return {
-        traceExporter: undefined,
-      };
     case 'none':
     default:
       return {

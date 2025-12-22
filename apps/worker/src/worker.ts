@@ -7,13 +7,16 @@ import { Worker, Job } from 'bullmq';
 import { getInstallationClient } from '../../../packages/github/client';
 import { loadConfigFromGitHub } from '../../../packages/github/config-loader';
 import { pickTargets, fetchRawFiles } from '../../../packages/github/sniffer';
-import { parseN8n } from '@replikanti/flowlint-core';
-import { ValidationError } from '@replikanti/flowlint-core';
-import { runAllRules } from '@replikanti/flowlint-core';
-import { buildCheckOutput, buildAnnotations } from '@replikanti/flowlint-core';
-import { getExampleLink } from '@replikanti/flowlint-core';
+import { 
+  parseN8n, 
+  ValidationError, 
+  runAllRules, 
+  buildCheckOutput, 
+  buildAnnotations, 
+  getExampleLink,
+  type Finding 
+} from '@replikanti/flowlint-core';
 import type { ReviewJob } from '../../api/src/queue';
-import type { Finding } from '@replikanti/flowlint-core';
 import { Octokit } from 'octokit';
 import { logger, createChildLogger } from '../../../packages/logger';
 import {

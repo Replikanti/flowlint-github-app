@@ -24,8 +24,7 @@ export async function loadConfigFromGitHub(
         return parseConfig(content);
       }
     } catch (error) {
-      // Ignore 404, try next candidate
-      continue;
+      // Ignore 404 or other errors, try next candidate
     }
   }
 

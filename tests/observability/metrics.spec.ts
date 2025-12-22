@@ -8,8 +8,6 @@ import {
   queueDepthGauge,
   githubApiCallsCounter,
   findingsGeneratedCounter,
-  clearMetrics,
-  getMetric,
 } from '../../packages/observability/metrics';
 
 /**

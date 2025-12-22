@@ -279,6 +279,7 @@ export function getActiveContext(): Context {
 }
 
 // Re-export OpenTelemetry primitives for convenience
-export { Span, SpanStatusCode, Context, trace, context, propagation };
+export type { Span, SpanStatusCode, Context } from '@opentelemetry/api';
+export { trace, context, propagation } from '@opentelemetry/api';
 export { initTracing, shutdownTracing } from './tracer';
 export { traceGitHubApiCall, GitHubApiAttributes } from './github-tracer';

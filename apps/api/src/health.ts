@@ -1,4 +1,3 @@
-import { Router } from 'express';
 import { logger } from '../../../packages/logger';
 import { getReviewQueue } from './queue';
 
