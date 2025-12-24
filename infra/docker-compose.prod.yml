@@ -36,7 +36,7 @@ services:
       - flowlint_net
 
   tempo:
-    image: ghcr.io/replikanti/flowlint-tempo:latest@sha256:a8482d0e918ef78002b862af40953be1789581d6726d8d549328066d9f8b289d
+    image: ghcr.io/replikanti/flowlint-tempo:latest@sha256:bf3949d38e057c0c463b05aa97956ff353c038b902285fbcb4f541f08bb1e7ed
     container_name: flowlint-tempo
     pull_policy: always
     command:
@@ -57,7 +57,7 @@ services:
         condition: service_completed_successfully
 
   api:
-    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:6613b354a13e5e2e3ff9183771773ac168d102797f0598a1480a6f72267fd303
+    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:429facd0c049002650b2af384a720a3384a6583208004b63a27ef7fe4cf20dc9
     container_name: flowlint-api
     pull_policy: always
     command: node dist/apps/api/src/server.js
@@ -90,7 +90,7 @@ services:
       retries: 3
 
   worker:
-    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:6613b354a13e5e2e3ff9183771773ac168d102797f0598a1480a6f72267fd303
+    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:429facd0c049002650b2af384a720a3384a6583208004b63a27ef7fe4cf20dc9
     container_name: flowlint-worker
     pull_policy: always
     command: node dist/apps/worker/src/worker.js
@@ -117,7 +117,7 @@ services:
       disable: true
 
   prometheus:
-    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:c5642aa696c699289d91e9f303e0139853a4e7293b39dda96c7f3d9e9b68831f
+    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:59754faabf27fe0924297ac442a5c5083e64c0f8be3d2ca3984efab023c7a00e
     container_name: flowlint-prometheus
     pull_policy: always
     restart: unless-stopped
@@ -138,7 +138,7 @@ services:
       - tempo
 
   grafana:
-    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:9bda45b2082fa9afc0beee99c6f962cb36aa2d8c8238d03b3ef471e31c490d2c
+    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:5cd512e6b4ba3d6a762e1dfbac85a7ddb4925192057c3fd2f1bccb4ca1a478e5
     container_name: flowlint-grafana
     pull_policy: always
     restart: unless-stopped
