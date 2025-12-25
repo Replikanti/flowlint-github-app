@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.5](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.6.4...flowlint-github-app-v1.6.5) (2025-12-25)
+
+
+### Bug Fixes
+
+* **github-app:** address SonarQube findings ([69e47c6](https://github.com/Replikanti/flowlint-github-app/commit/69e47c6a4655e95f850f03383fa7acc69583f0dd))
+* **github-app:** resolve remaining SonarQube findings ([c488e3f](https://github.com/Replikanti/flowlint-github-app/commit/c488e3ff596a237b3dc1512da25c397b3d0b7a1b))
+* **github-app:** resolve remaining SonarQube findings ([89c28c9](https://github.com/Replikanti/flowlint-github-app/commit/89c28c9a712aecd24b139df6801646ed36a5beae))
+* **test:** correct ValidationError constructor usage ([eea2959](https://github.com/Replikanti/flowlint-github-app/commit/eea29594ddad20f93aaf0d2fecb9ab0a5dc2756a))
+
 ## [1.6.4](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.6.3...flowlint-github-app-v1.6.4) (2025-12-22)
 
 
