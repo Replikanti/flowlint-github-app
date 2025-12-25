@@ -15,8 +15,7 @@ describe('Worker Helpers', () => {
 
   describe('formatParseError', () => {
     it('should format ValidationError', () => {
-      const err = new ValidationError('Validation failed');
-      err.errors = [{ path: 'node.id', message: 'Missing ID', suggestion: 'Add ID' }];
+      const err = new ValidationError([{ path: 'node.id', message: 'Missing ID', suggestion: 'Add ID' }]);
       
       const formatted = formatParseError(err);
       expect(formatted).toContain('- node.id: Missing ID (suggestion: Add ID)');
