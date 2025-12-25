@@ -38,7 +38,7 @@ vi.mock('../../packages/observability', () => ({
 // We need to import app AFTER mocks
 import { app } from '../../apps/api/src/app';
 
-const MOCK_SECRET_VALUE = 'test-secret-value';
+const MOCK_SECRET_VALUE = process.env.TEST_SECRET || 'random-test-value-' + Date.now();
 
 describe('API App', () => {
   beforeEach(() => {
@@ -140,7 +140,7 @@ describe('API App', () => {
       repository: { full_name: 'owner/repo' },
       pull_request: { number: 1, head: { sha: 'sha', ref: 'branch' } },
     };
-    const signature = 'sha256=' + require('node:crypto').createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
+    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
     const res = await request(app)
       .post('/webhooks/github')
@@ -159,7 +159,7 @@ describe('API App', () => {
       repository: { full_name: 'owner/repo' },
       check_suite: { head_sha: 'sha', id: 456 },
     };
-    const signature = 'sha256=' + require('node:crypto').createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
+    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
     const res = await request(app)
       .post('/webhooks/github')
