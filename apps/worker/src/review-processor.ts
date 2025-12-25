@@ -22,7 +22,6 @@ import {
 
 /**
  * Helper function to update a GitHub Check Run status
- * Eliminates code duplication across worker
  */
 async function updateCheckRun(
   gh: Octokit,
@@ -81,6 +80,33 @@ export function formatParseError(error: unknown): string | undefined {
   return undefined;
 }
 
+async function supersedePreviousRuns(
+  gh: Octokit,
+  owner: string,
+  repo: string,
+  activeCheckRunId: number,
+  previousRuns: any[],
+  jobLogger: any,
+) {
+  await Promise.all(
+    previousRuns.map(async (run) => {
+      try {
+        await updateCheckRun(gh, owner, repo, run.id, {
+          status: 'completed',
+          conclusion: 'neutral',
+          completed_at: new Date().toISOString(),
+          output: {
+            title: 'Superseded by newer FlowLint run',
+            summary: `This run has been replaced by FlowLint check ${activeCheckRunId}. See the latest run for up-to-date findings.`,
+          },
+        });
+      } catch (supersedeError) {
+        jobLogger.warn({ error: supersedeError, runId: run.id }, 'failed to mark older run as superseded');
+      }
+    }),
+  );
+}
+
 async function handleNoTargets(
   gh: Octokit,
   owner: string,
@@ -102,82 +128,6 @@ async function handleNoTargets(
   await supersedePreviousRuns(gh, owner, repo, activeCheckRunId, previousRuns, jobLogger);
 }
 
-export const reviewProcessor = async (job: Job<ReviewJob>) => {
-    const { installationId, repo, prNumber, sha, checkSuiteId } = job.data;
-    const [owner, name] = repo.split('/');
-
-    // Create child logger with job context for correlation
-    const jobLogger = createChildLogger({
-      jobId: job.id,
-      repo,
-      prNumber,
-      sha: sha.substring(0, 7), // Short SHA for readability
-    });
-
-    jobLogger.info('processing review job');
-
-    // Start timer for job duration
-    const timer = jobDurationHistogram.startTimer({ repo });
-
-    let gh: Octokit;
-    let checkRunId: number | undefined;
-    let previousRuns: any[] = [];
-
-    try {
-      gh = await getInstallationClient(installationId);
-
-      // Collect existing FlowLint check runs (if any) so we can supersede them later
-      const { data: commitChecks } = await gh.request('GET /repos/{owner}/{repo}/commits/{ref}/check-runs', {
-        owner,
-        repo: name,
-        ref: sha,
-      });
-      previousRuns = commitChecks.check_runs?.filter(
-        (run: any) => run.name === (process.env.CHECK_NAME || 'FlowLint') && run.head_sha === sha,
-      ) ?? [];
-
-      // Always create a brand new check run for this execution
-      const { data: check } = await gh.request('POST /repos/{owner}/{repo}/check-runs', {
-        owner,
-        repo: name,
-        name: process.env.CHECK_NAME || 'FlowLint',
-        head_sha: sha,
-        status: 'in_progress',
-        started_at: new Date().toISOString(),
-        check_suite_id: checkSuiteId,
-      });
-      checkRunId = check.id;
-
-      const paginate = (gh as Octokit & { paginate?: Octokit['paginate'] }).paginate;
-      if (typeof paginate !== 'function') {
-        throw new TypeError('Octokit client is missing paginate(); ensure @octokit/plugin-paginate-rest is registered.');
-      }
-
-      // 1. List all files in the PR (paginated)
-      const allFiles = await paginate.call(gh, 'GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
-        owner,
-        repo: name,
-        pull_number: prNumber,
-        per_page: 100,
-      });
-
-      // 2. Load config from GitHub (using helper) and filter for target files
-      const cfg = await loadConfigFromGitHub(gh, repo, sha);
-      const targets = pickTargets(allFiles, cfg.files);
-      const activeCheckRunId = assertCheckRunId(checkRunId);
-
-      jobLogger.info({ totalFiles: allFiles.length, targetCount: targets.length, targetFiles: targets.map((f: any) => f.filename) }, 'files analyzed');
-      jobLogger.info({ allFilesMetadata: allFiles.map((f: any) => ({ filename: f.filename, status: f.status, additions: f.additions, deletions: f.deletions, changes: f.changes })) }, 'PR file metadata');
-
-      // 3. If no targets, complete the check run as neutral and supersede older runs
-      if (targets.length === 0) {
-        await handleNoTargets(gh, owner, name, activeCheckRunId, previousRuns, jobLogger);
-
-        // Record successful job completion
-        timer();
-        jobsCompletedCounter.labels('success', repo).inc();
-        return;
-      }
 async function processTargets(
   gh: Octokit,
   repo: string,
@@ -202,7 +152,7 @@ async function processTargets(
   // Process successfully fetched files
   for (const file of targets) {
     const raw = rawFiles.get(file.filename);
-    if (!raw) continue; // Already handled in fetchErrors
+    if (!raw) continue;
 
     try {
       const graph = parseN8n(raw);
@@ -212,13 +162,11 @@ async function processTargets(
         nodeLines: graph.meta.nodeLines as Record<string, number> | undefined,
       });
 
-      // Inject documentation URLs into findings
       rulesResults.forEach((f) => {
         f.documentationUrl = getExampleLink(f.rule);
         jobLogger.info({ rule: f.rule, url: f.documentationUrl }, 'injected documentation URL');
       });
 
-      // Track findings generated
       for (const finding of rulesResults) {
         findingsGeneratedCounter.labels(finding.rule, finding.severity).inc();
       }
@@ -238,84 +186,131 @@ async function processTargets(
   return findings;
 }
 
-      // 4. Fetch, parse, and lint all target files
-      const findings = await processTargets(gh, repo, targets, cfg, jobLogger);
+async function completeCheckRun(
+  gh: Octokit,
+  owner: string,
+  repo: string,
+  activeCheckRunId: number,
+  findings: Finding[],
+  cfg: any,
+  jobLogger: any,
+) {
+  let summaryText: string | undefined;
+  if (cfg.report.summary_limit > 0 && findings.length > cfg.report.summary_limit) {
+    const { output: tempOutput } = buildCheckOutput({ findings, cfg });
+    summaryText = `${tempOutput.summary}\n\n⚠️ Showing first ${cfg.report.summary_limit} annotations of ${findings.length} total findings.`;
+  }
 
-      // 5. Build the final output (use ALL findings for conclusion)
-      let summaryText: string | undefined;
-      if (cfg.report.summary_limit > 0 && findings.length > cfg.report.summary_limit) {
-        const { output: tempOutput } = buildCheckOutput({ findings, cfg });
-        summaryText = `${tempOutput.summary}\n\n⚠️ Showing first ${cfg.report.summary_limit} annotations of ${findings.length} total findings.`;
+  const { conclusion, output } = buildCheckOutput({
+    findings,
+    cfg,
+    summaryOverride: summaryText,
+  });
+
+  const limitedAnnotations =
+    cfg.report.summary_limit > 0 && findings.length > cfg.report.summary_limit
+      ? buildAnnotations(findings.slice(0, cfg.report.summary_limit))
+      : buildAnnotations(findings);
+
+  if (cfg.report.annotations && limitedAnnotations.length > 0) {
+    jobLogger.info({ totalAnnotations: limitedAnnotations.length }, 'sending all annotations in single update');
+    const payload = {
+      status: 'completed' as const,
+      conclusion,
+      completed_at: new Date().toISOString(),
+      output: {
+        ...output,
+        annotations: limitedAnnotations,
+      },
+    };
+    await updateCheckRun(gh, owner, repo, activeCheckRunId, payload);
+  } else {
+    await updateCheckRun(gh, owner, repo, activeCheckRunId, {
+      status: 'completed',
+      conclusion,
+      completed_at: new Date().toISOString(),
+      output,
+    });
+  }
+}
+
+export const reviewProcessor = async (job: Job<ReviewJob>) => {
+    const { installationId, repo, prNumber, sha, checkSuiteId } = job.data;
+    const [owner, name] = repo.split('/');
+
+    const jobLogger = createChildLogger({
+      jobId: job.id,
+      repo,
+      prNumber,
+      sha: sha.substring(0, 7),
+    });
+
+    jobLogger.info('processing review job');
+    const timer = jobDurationHistogram.startTimer({ repo });
+
+    let gh: Octokit;
+    let checkRunId: number | undefined;
+    let previousRuns: any[] = [];
+
+    try {
+      gh = await getInstallationClient(installationId);
+
+      const { data: commitChecks } = await gh.request('GET /repos/{owner}/{repo}/commits/{ref}/check-runs', {
+        owner,
+        repo: name,
+        ref: sha,
+      });
+      previousRuns = commitChecks.check_runs?.filter(
+        (run: any) => run.name === (process.env.CHECK_NAME || 'FlowLint') && run.head_sha === sha,
+      ) ?? [];
+
+      const { data: check } = await gh.request('POST /repos/{owner}/{repo}/check-runs', {
+        owner,
+        repo: name,
+        name: process.env.CHECK_NAME || 'FlowLint',
+        head_sha: sha,
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+        check_suite_id: checkSuiteId,
+      });
+      checkRunId = check.id;
+
+      const paginate = (gh as Octokit & { paginate?: Octokit['paginate'] }).paginate;
+      if (typeof paginate !== 'function') {
+        throw new TypeError('Octokit client is missing paginate(); ensure @octokit/plugin-paginate-rest is registered.');
       }
 
-      const { conclusion, output } = buildCheckOutput({
-        findings,
-        cfg,
-        summaryOverride: summaryText,
+      const allFiles = await paginate.call(gh, 'GET /repos/{owner}/{repo}/pulls/{pull_number}/files', {
+        owner,
+        repo: name,
+        pull_number: prNumber,
+        per_page: 100,
       });
 
-      // 6. Apply summary_limit to annotations only (not to findings count/conclusion)
-      const limitedAnnotations =
-        cfg.report.summary_limit > 0 && findings.length > cfg.report.summary_limit
-          ? buildAnnotations(findings.slice(0, cfg.report.summary_limit))
-          : buildAnnotations(findings);
+      const cfg = await loadConfigFromGitHub(gh, repo, sha);
+      const targets = pickTargets(allFiles, cfg.files);
+      const activeCheckRunId = assertCheckRunId(checkRunId);
 
-      // 7. Send all annotations in one final update (not batched)
-      // GitHub API handles all annotations in a single request better than multiple batches
-      if (cfg.report.annotations && limitedAnnotations.length > 0) {
-        jobLogger.info({ totalAnnotations: limitedAnnotations.length }, 'sending all annotations in single update');
-        jobLogger.info({ sampleAnnotation: JSON.stringify(limitedAnnotations[0]) }, 'sample annotation structure');
-        const payload = {
-          status: 'completed' as const,
-          conclusion,
-          completed_at: new Date().toISOString(),
-          output: {
-            ...output,
-            annotations: limitedAnnotations,
-          },
-        };
-        jobLogger.info({ payload: JSON.stringify(payload, null, 2) }, 'full check run update payload');
-        await updateCheckRun(gh, owner, name, activeCheckRunId, payload);
-      } else {
-        // 8. Finalize the check run with the conclusion (no annotations or annotations disabled)
-        await updateCheckRun(gh, owner, name, activeCheckRunId, {
-          status: 'completed',
-          conclusion,
-          completed_at: new Date().toISOString(),
-          output,
-        });
+      jobLogger.info({ totalFiles: allFiles.length, targetCount: targets.length, targetFiles: targets.map((f: any) => f.filename) }, 'files analyzed');
+
+      if (targets.length === 0) {
+        await handleNoTargets(gh, owner, name, activeCheckRunId, previousRuns, jobLogger);
+        timer();
+        jobsCompletedCounter.labels('success', repo).inc();
+        return;
       }
 
-      // Mark older FlowLint runs as superseded now that we have a successful result
-      await Promise.all(
-        previousRuns.map(async (run) => {
-          try {
-            await updateCheckRun(gh, owner, name, run.id, {
-              status: 'completed',
-              conclusion: 'neutral',
-              completed_at: new Date().toISOString(),
-              output: {
-                title: 'Superseded by newer FlowLint run',
-                summary: `This run has been replaced by FlowLint check ${activeCheckRunId}. See the latest run for up-to-date findings.`, 
-              },
-            });
-          } catch (supersedeError) {
-            jobLogger.warn({ error: supersedeError, runId: run.id }, 'failed to mark older run as superseded');
-          }
-        }),
-      );
+      const findings = await processTargets(gh, repo, targets, cfg, jobLogger);
+      await completeCheckRun(gh, owner, name, activeCheckRunId, findings, cfg, jobLogger);
+      await supersedePreviousRuns(gh, owner, name, activeCheckRunId, previousRuns, jobLogger);
 
-      // Record successful job completion
-      timer(); // Record duration
+      timer();
       jobsCompletedCounter.labels('success', repo).inc();
     } catch (error) {
       jobLogger.error({ error }, 'job failed');
-
-      // Record failed job completion
-      timer(); // Record duration even for failures
+      timer();
       jobsCompletedCounter.labels('failure', repo).inc();
 
-      // If something fails, mark the check run as failed
       if (gh! && checkRunId) {
         try {
           await updateCheckRun(gh, owner, name, assertCheckRunId(checkRunId), {

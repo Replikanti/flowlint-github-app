@@ -132,7 +132,6 @@ describe('Worker Processor', () => {
 
   it('should process a job with target files and findings', async () => {
     (pickTargets as any).mockImplementation(() => {
-        console.log('DEBUG: pickTargets called');
         return [{ filename: 'workflow.json' }];
     });
     (fetchRawFiles as any).mockResolvedValue({ 

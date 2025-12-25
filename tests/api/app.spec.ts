@@ -133,6 +133,43 @@ describe('API App', () => {
     expect(res.status).toBe(200);
   });
 
+  it('POST /webhooks/github should reject missing installation id', async () => {
+    const payload = {
+      action: 'opened',
+      // installation missing
+      repository: { full_name: 'owner/repo' },
+      pull_request: { number: 1, head: { sha: 'sha', ref: 'branch' } },
+    };
+    const signature = 'sha256=' + require('node:crypto').createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
+
+    const res = await request(app)
+      .post('/webhooks/github')
+      .set('x-github-event', 'pull_request')
+      .set('x-hub-signature-256', signature)
+      .send(payload);
+
+    expect(res.status).toBe(202);
+    expect(res.body.error).toContain('Missing installation id');
+  });
+
+  it('POST /webhooks/github should reject check_suite without installation id', async () => {
+    const payload = {
+      action: 'requested',
+      // installation missing
+      repository: { full_name: 'owner/repo' },
+      check_suite: { head_sha: 'sha', id: 456 },
+    };
+    const signature = 'sha256=' + require('node:crypto').createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
+
+    const res = await request(app)
+      .post('/webhooks/github')
+      .set('x-github-event', 'check_suite')
+      .set('x-hub-signature-256', signature)
+      .send(payload);
+
+    expect(res.status).toBe(202);
+  });
+
   it('POST /webhooks/github should reject invalid signature', async () => {
     const res = await request(app)
       .post('/webhooks/github')
