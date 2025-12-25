@@ -23,10 +23,13 @@ if (trustProxy === 'true') {
   app.set('trust proxy', true);
 } else if (trustProxy === 'false') {
   app.set('trust proxy', false);
-} else if (!Number.isNaN(Number(trustProxy))) {
-  app.set('trust proxy', Number(trustProxy));
 } else {
-  app.set('trust proxy', trustProxy);
+  const trustProxyNum = Number(trustProxy);
+  if (Number.isFinite(trustProxyNum)) {
+    app.set('trust proxy', trustProxyNum);
+  } else {
+    app.set('trust proxy', trustProxy);
+  }
 }
 
 // Add Prometheus metrics middleware
@@ -107,81 +110,100 @@ app.post('/webhooks/github', webhookLimiter, async (req: Request, res: Response)
   webhookLogger.info('webhook received');
   webhookCounter.labels(event, payload.action || 'unknown').inc();
 
-  if (event === 'pull_request' && ['opened', 'synchronize', 'ready_for_review'].includes(payload.action)) {
-    if (!payload.installation?.id) {
-      return res.status(202).json({ ok: false, error: 'Missing installation id' });
-    }
-    await enqueueReview({
-      installationId: payload.installation.id,
-      repo: payload.repository.full_name,
-      prNumber: payload.pull_request.number,
-      sha: payload.pull_request.head.sha,
-      headBranch: payload.pull_request.head.ref,
-    });
-    return res.status(200).json({ ok: true, delivery });
+  if (event === 'pull_request') {
+    return handlePullRequest(payload, res, delivery);
   }
 
-  // Simplified handler for brevity - include check_suite and check_run logic
-  // (Copying full logic from server.ts)
-  if (event === 'check_suite' && ['requested', 'rerequested'].includes(payload.action)) {
-    if (!payload.installation?.id) {
-      return res.status(202).json({ ok: false, error: 'Missing installation id' });
-    }
-    const suite = payload.check_suite;
-    const prs = suite?.pull_requests ?? [];
-    if (!suite?.head_sha || prs.length === 0) {
-      return res.status(202).json({ ok: false, error: 'No pull requests attached to check suite' });
-    }
-    const latestRuns = suite.latest_check_runs ?? suite.check_runs ?? [];
-
-    await Promise.all(
-      prs.map((pr: any) => {
-        const matchingRun = latestRuns.find(
-          (run: any) =>
-            run.head_sha === suite.head_sha &&
-            (run.name === (process.env.CHECK_NAME || 'FlowLint') || run.app?.slug === 'flowlint'),
-        );
-
-        return enqueueReview({
-          installationId: payload.installation.id,
-          repo: payload.repository.full_name,
-          prNumber: pr.number,
-          sha: suite.head_sha,
-          headBranch: pr.head?.ref,
-          checkRunId: matchingRun?.id,
-          checkSuiteId: suite.id,
-        });
-      }),
-    );
-    return res.status(200).json({ ok: true, delivery });
+  if (event === 'check_suite') {
+    return handleCheckSuite(payload, res, delivery);
   }
 
-  if (event === 'check_run' && ['rerequested', 'requested_action'].includes(payload.action)) {
-    if (!payload.installation?.id) {
-      return res.status(202).json({ ok: false, error: 'Missing installation id' });
-    }
-
-    const run = payload.check_run;
-    const pr = run?.check_suite?.pull_requests?.[0];
-    if (!run?.head_sha || !pr) {
-      return res.status(202).json({ ok: false, error: 'Missing pull request info for check run' });
-    }
-
-    await enqueueReview({
-      installationId: payload.installation.id,
-      repo: payload.repository.full_name,
-      prNumber: pr.number,
-      sha: run.head_sha,
-      headBranch: pr.head?.ref ?? run.head_branch,
-      checkRunId: run.id,
-      checkSuiteId: run.check_suite?.id,
-    });
-
-    return res.status(200).json({ ok: true, delivery });
+  if (event === 'check_run') {
+    return handleCheckRun(payload, res, delivery);
   }
 
   return res.status(200).json({ ok: true, delivery });
 });
+
+async function handlePullRequest(payload: any, res: Response, delivery: string) {
+  if (!['opened', 'synchronize', 'ready_for_review'].includes(payload.action)) {
+    return res.status(200).json({ ok: true, delivery });
+  }
+  if (!payload.installation?.id) {
+    return res.status(202).json({ ok: false, error: 'Missing installation id' });
+  }
+  await enqueueReview({
+    installationId: payload.installation.id,
+    repo: payload.repository.full_name,
+    prNumber: payload.pull_request.number,
+    sha: payload.pull_request.head.sha,
+    headBranch: payload.pull_request.head.ref,
+  });
+  return res.status(200).json({ ok: true, delivery });
+}
+
+async function handleCheckSuite(payload: any, res: Response, delivery: string) {
+  if (!['requested', 'rerequested'].includes(payload.action)) {
+    return res.status(200).json({ ok: true, delivery });
+  }
+  if (!payload.installation?.id) {
+    return res.status(202).json({ ok: false, error: 'Missing installation id' });
+  }
+  const suite = payload.check_suite;
+  const prs = suite?.pull_requests ?? [];
+  if (!suite?.head_sha || prs.length === 0) {
+    return res.status(202).json({ ok: false, error: 'No pull requests attached to check suite' });
+  }
+  const latestRuns = suite.latest_check_runs ?? suite.check_runs ?? [];
+
+  await Promise.all(
+    prs.map((pr: any) => {
+      const matchingRun = latestRuns.find(
+        (run: any) =>
+          run.head_sha === suite.head_sha &&
+          (run.name === (process.env.CHECK_NAME || 'FlowLint') || run.app?.slug === 'flowlint'),
+      );
+
+      return enqueueReview({
+        installationId: payload.installation.id,
+        repo: payload.repository.full_name,
+        prNumber: pr.number,
+        sha: suite.head_sha,
+        headBranch: pr.head?.ref,
+        checkRunId: matchingRun?.id,
+        checkSuiteId: suite.id,
+      });
+    }),
+  );
+  return res.status(200).json({ ok: true, delivery });
+}
+
+async function handleCheckRun(payload: any, res: Response, delivery: string) {
+  if (!['rerequested', 'requested_action'].includes(payload.action)) {
+    return res.status(200).json({ ok: true, delivery });
+  }
+  if (!payload.installation?.id) {
+    return res.status(202).json({ ok: false, error: 'Missing installation id' });
+  }
+
+  const run = payload.check_run;
+  const pr = run?.check_suite?.pull_requests?.[0];
+  if (!run?.head_sha || !pr) {
+    return res.status(202).json({ ok: false, error: 'Missing pull request info for check run' });
+  }
+
+  await enqueueReview({
+    installationId: payload.installation.id,
+    repo: payload.repository.full_name,
+    prNumber: pr.number,
+    sha: run.head_sha,
+    headBranch: pr.head?.ref ?? run.head_branch,
+    checkRunId: run.id,
+    checkSuiteId: run.check_suite?.id,
+  });
+
+  return res.status(200).json({ ok: true, delivery });
+}
 
 app.get('/healthz', async (_req, res) => {
   const health = await checkHealth();

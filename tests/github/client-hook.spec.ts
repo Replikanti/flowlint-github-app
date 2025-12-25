@@ -4,9 +4,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 let hook: any;
 
 vi.mock('octokit', () => {
-  const MockOctokit = function(options: any) {
-    hook = options.request.hook;
-  };
+  class MockOctokit {
+    constructor(options: any) {
+      hook = options.request.hook;
+    }
+    // Dummy method to avoid "class with only constructor" smell
+    request() { return Promise.resolve(); }
+  }
   (MockOctokit as any).plugin = vi.fn().mockReturnValue(MockOctokit);
   return { Octokit: MockOctokit };
 });

@@ -81,6 +81,27 @@ export function formatParseError(error: unknown): string | undefined {
   return undefined;
 }
 
+async function handleNoTargets(
+  gh: Octokit,
+  owner: string,
+  repo: string,
+  activeCheckRunId: number,
+  previousRuns: any[],
+  jobLogger: any,
+) {
+  await updateCheckRun(gh, owner, repo, activeCheckRunId, {
+    status: 'completed',
+    conclusion: 'neutral',
+    completed_at: new Date().toISOString(),
+    output: {
+      title: 'No relevant files found',
+      summary: 'No workflow files were found to analyze in this pull request.',
+    },
+  });
+
+  await supersedePreviousRuns(gh, owner, repo, activeCheckRunId, previousRuns, jobLogger);
+}
+
 export const reviewProcessor = async (job: Job<ReviewJob>) => {
     const { installationId, repo, prNumber, sha, checkSuiteId } = job.data;
     const [owner, name] = repo.split('/');
@@ -129,7 +150,7 @@ export const reviewProcessor = async (job: Job<ReviewJob>) => {
 
       const paginate = (gh as Octokit & { paginate?: Octokit['paginate'] }).paginate;
       if (typeof paginate !== 'function') {
-        throw new Error('Octokit client is missing paginate(); ensure @octokit/plugin-paginate-rest is registered.');
+        throw new TypeError('Octokit client is missing paginate(); ensure @octokit/plugin-paginate-rest is registered.');
       }
 
       // 1. List all files in the PR (paginated)
@@ -150,95 +171,75 @@ export const reviewProcessor = async (job: Job<ReviewJob>) => {
 
       // 3. If no targets, complete the check run as neutral and supersede older runs
       if (targets.length === 0) {
-        await updateCheckRun(gh, owner, name, activeCheckRunId, {
-          status: 'completed',
-          conclusion: 'neutral',
-          completed_at: new Date().toISOString(),
-          output: {
-            title: 'No relevant files found',
-            summary: 'No workflow files were found to analyze in this pull request.',
-          },
-        });
-
-        // Mark older FlowLint runs as superseded even when no files found
-        await Promise.all(
-          previousRuns.map(async (run) => {
-            try {
-              await gh.request('PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}', {
-                owner,
-                repo: name,
-                check_run_id: run.id,
-                status: 'completed',
-                conclusion: 'neutral',
-                completed_at: new Date().toISOString(),
-                output: {
-                  title: 'Superseded by newer FlowLint run',
-                  summary: `This run has been replaced by FlowLint check ${checkRunId}. See the latest run for up-to-date findings.`, 
-                },
-              });
-            } catch (supersedeError) {
-              jobLogger.warn({ error: supersedeError, runId: run.id }, 'failed to mark older run as superseded');
-            }
-          }),
-        );
+        await handleNoTargets(gh, owner, name, activeCheckRunId, previousRuns, jobLogger);
 
         // Record successful job completion
         timer();
         jobsCompletedCounter.labels('success', repo).inc();
         return;
       }
+async function processTargets(
+  gh: Octokit,
+  repo: string,
+  targets: any[],
+  cfg: any,
+  jobLogger: any,
+): Promise<Finding[]> {
+  const { contents: rawFiles, errors: fetchErrors } = await fetchRawFiles(gh, repo, targets);
+  const findings: Finding[] = [];
+
+  // Emit findings for files that failed to fetch
+  for (const { filename, error } of fetchErrors) {
+    findings.push({
+      rule: 'FETCH',
+      severity: 'should',
+      path: filename,
+      message: `Failed to fetch file: ${error}`,
+      raw_details: 'This may be due to a force-push, deleted file, or temporary GitHub API issue. Try re-running the check.',
+    });
+  }
+
+  // Process successfully fetched files
+  for (const file of targets) {
+    const raw = rawFiles.get(file.filename);
+    if (!raw) continue; // Already handled in fetchErrors
+
+    try {
+      const graph = parseN8n(raw);
+      const rulesResults = runAllRules(graph, {
+        path: file.filename,
+        cfg,
+        nodeLines: graph.meta.nodeLines as Record<string, number> | undefined,
+      });
+
+      // Inject documentation URLs into findings
+      rulesResults.forEach((f) => {
+        f.documentationUrl = getExampleLink(f.rule);
+        jobLogger.info({ rule: f.rule, url: f.documentationUrl }, 'injected documentation URL');
+      });
+
+      // Track findings generated
+      for (const finding of rulesResults) {
+        findingsGeneratedCounter.labels(finding.rule, finding.severity).inc();
+      }
+
+      findings.push(...rulesResults);
+    } catch (error) {
+      findings.push({
+        rule: 'PARSE',
+        severity: 'must',
+        path: file.filename,
+        message: (error as Error).message,
+        raw_details: formatParseError(error),
+        line: 1,
+      });
+    }
+  }
+  return findings;
+}
 
       // 4. Fetch, parse, and lint all target files
-      const { contents: rawFiles, errors: fetchErrors } = await fetchRawFiles(gh, repo, targets);
-      let findings: Finding[] = [];
-
-      // Emit findings for files that failed to fetch
-      for (const { filename, error } of fetchErrors) {
-        findings.push({
-          rule: 'FETCH',
-          severity: 'should',
-          path: filename,
-          message: `Failed to fetch file: ${error}`,
-          raw_details: 'This may be due to a force-push, deleted file, or temporary GitHub API issue. Try re-running the check.',
-        });
-      }
-
-      // Process successfully fetched files
-      for (const file of targets) {
-        const raw = rawFiles.get(file.filename);
-        if (!raw) continue; // Already handled in fetchErrors
-
-        try {
-          const graph = parseN8n(raw);
-          const rulesResults = runAllRules(graph, {
-            path: file.filename,
-            cfg,
-            nodeLines: graph.meta.nodeLines as Record<string, number> | undefined,
-          });
-
-          // Inject documentation URLs into findings
-          rulesResults.forEach((f) => {
-            f.documentationUrl = getExampleLink(f.rule);
-            jobLogger.info({ rule: f.rule, url: f.documentationUrl }, 'injected documentation URL');
-          });
-
-          // Track findings generated
-          for (const finding of rulesResults) {
-            findingsGeneratedCounter.labels(finding.rule, finding.severity).inc();
-          }
-
-          findings.push(...rulesResults);
-        } catch (error) {
-          findings.push({
-            rule: 'PARSE',
-            severity: 'must',
-            path: file.filename,
-            message: (error as Error).message,
-            raw_details: formatParseError(error),
-            line: 1,
-          });
-        }
-      }
+      const findings = await processTargets(gh, repo, targets, cfg, jobLogger);
 
       // 5. Build the final output (use ALL findings for conclusion)
       let summaryText: string | undefined;
