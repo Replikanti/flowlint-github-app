@@ -9,13 +9,24 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'clover', 'cobertura'],
-      include: ['apps/**', 'packages/**'],
-      exclude: ['tests/**', '**/node_modules/**'],
+      include: ['apps/api/src/**', 'apps/worker/src/**', 'packages/github/**'],
+      exclude: [
+        'tests/**', 
+        '**/node_modules/**', 
+        '**/tracing.ts', 
+        '**/server.ts', 
+        '**/worker.ts',
+        'packages/tracing/**',
+        'packages/logger/**',
+        'packages/observability/**', // Mostly tested via integration or boilerplate
+        '**/*.json',
+        '**/types.ts'
+      ],
       thresholds: {
-        lines: 9,
-        functions: 9,
-        branches: 9,
-        statements: 9,
+        lines: 80,
+        functions: 70,
+        branches: 70,
+        statements: 80,
       },
     },
   },
