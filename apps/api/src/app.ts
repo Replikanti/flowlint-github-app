@@ -1,5 +1,5 @@
 import express from 'express';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import type { Request, Response, NextFunction } from 'express';
@@ -15,6 +15,7 @@ import {
 import openapiSpec from './openapi.json';
 
 const app = express();
+app.disable('x-powered-by');
 
 // Configure trust proxy
 const trustProxy = process.env.TRUST_PROXY || 'false';
@@ -22,7 +23,7 @@ if (trustProxy === 'true') {
   app.set('trust proxy', true);
 } else if (trustProxy === 'false') {
   app.set('trust proxy', false);
-} else if (!isNaN(Number(trustProxy))) {
+} else if (!Number.isNaN(Number(trustProxy))) {
   app.set('trust proxy', Number(trustProxy));
 } else {
   app.set('trust proxy', trustProxy);

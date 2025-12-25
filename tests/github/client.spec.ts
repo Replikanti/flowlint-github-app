@@ -50,7 +50,7 @@ describe('GitHub Client', () => {
 
   it('should configure request hook for metrics', async () => {
     const { getInstallationClient } = await import('../../packages/github/client');
-    const client = await getInstallationClient(123);
+    await getInstallationClient(123);
     
     // The client is an Octokit instance. We can't easily inspect constructor args from here 
     // without mocking Octokit itself.

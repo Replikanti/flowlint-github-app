@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
+import crypto from 'node:crypto';
 
 // Mock dependencies
 vi.mock('../../apps/api/src/queue', () => ({
@@ -37,10 +38,12 @@ vi.mock('../../packages/observability', () => ({
 // We need to import app AFTER mocks
 import { app } from '../../apps/api/src/app';
 
+const MOCK_SECRET_VALUE = 'test-secret-value';
+
 describe('API App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.WEBHOOK_SECRET = 'test-secret';
+    process.env.WEBHOOK_SECRET = MOCK_SECRET_VALUE;
   });
 
   it('GET /healthz should return 200 OK', async () => {
@@ -72,7 +75,7 @@ describe('API App', () => {
       },
     };
 
-    const signature = 'sha256=' + require('crypto').createHmac('sha256', 'test-secret').update(JSON.stringify(payload)).digest('hex');
+    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
     const res = await request(app)
       .post('/webhooks/github')
@@ -94,7 +97,7 @@ describe('API App', () => {
         pull_requests: [{ number: 1, head: { ref: 'branch' } }],
       },
     };
-    const signature = 'sha256=' + require('crypto').createHmac('sha256', 'test-secret').update(JSON.stringify(payload)).digest('hex');
+    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
     const res = await request(app)
       .post('/webhooks/github')
@@ -119,7 +122,7 @@ describe('API App', () => {
         },
       },
     };
-    const signature = 'sha256=' + require('crypto').createHmac('sha256', 'test-secret').update(JSON.stringify(payload)).digest('hex');
+    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
     const res = await request(app)
       .post('/webhooks/github')

@@ -58,7 +58,7 @@ async function updateCheckRun(
 
 export function assertCheckRunId(value: number | undefined): number {
   if (typeof value !== 'number') {
-    throw new Error('FlowLint check run was not initialized');
+    throw new TypeError('FlowLint check run was not initialized');
   }
   return value;
 }

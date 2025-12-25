@@ -4,10 +4,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 let hook: any;
 
 vi.mock('octokit', () => {
-  const MockOctokit = class {
-    constructor(options: any) {
-      hook = options.request.hook;
-    }
+  const MockOctokit = function(options: any) {
+    hook = options.request.hook;
   };
   (MockOctokit as any).plugin = vi.fn().mockReturnValue(MockOctokit);
   return { Octokit: MockOctokit };
