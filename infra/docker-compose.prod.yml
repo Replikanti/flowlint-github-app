@@ -36,7 +36,7 @@ services:
       - flowlint_net
 
   tempo:
-    image: ghcr.io/replikanti/flowlint-tempo:latest@sha256:ab277e88998367f87db2bfe3dd62386224308a5aeddd9a8909aa124e8c242089
+    image: ghcr.io/replikanti/flowlint-tempo:latest@sha256:1e4b468b9294e1df499095a975ad8f37ee5ac52108b0703cc46b3ed2d832934e
     container_name: flowlint-tempo
     pull_policy: always
     command:
@@ -117,7 +117,7 @@ services:
       disable: true
 
   prometheus:
-    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:d2cac5e9b09635d8b64f9a708a112180c51566ef27d02c17c4164b9ded08bea7
+    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:18e521921f567608dd68b5543e2aaf334b373e61e328dd77cdb96173ef930b18
     container_name: flowlint-prometheus
     pull_policy: always
     restart: unless-stopped
