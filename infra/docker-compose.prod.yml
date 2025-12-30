@@ -57,7 +57,7 @@ services:
         condition: service_completed_successfully
 
   api:
-    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:988710c26d7da5eae10c3cbcdd9ae1d3b1e17f9f90eb01638d7662e383ff2629
+    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:344d86823126473d001c3e60446f46de349bb99c36d506438485fbe79c9233a5
     container_name: flowlint-api
     pull_policy: always
     command: node dist/apps/api/src/server.js
@@ -90,7 +90,7 @@ services:
       retries: 3
 
   worker:
-    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:988710c26d7da5eae10c3cbcdd9ae1d3b1e17f9f90eb01638d7662e383ff2629
+    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:344d86823126473d001c3e60446f46de349bb99c36d506438485fbe79c9233a5
     container_name: flowlint-worker
     pull_policy: always
     command: node dist/apps/worker/src/worker.js
@@ -117,7 +117,7 @@ services:
       disable: true
 
   prometheus:
-    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:9603196270662f38997aee7c1f588e870cc30155daa0d86934babe0d5c1aa1f2
+    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:b89e426c348ccf3d8a3fbdd92f3272a712687edd51c44006c1bdd5279247cfb6
     container_name: flowlint-prometheus
     pull_policy: always
     restart: unless-stopped
