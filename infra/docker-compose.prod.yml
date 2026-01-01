@@ -12,7 +12,7 @@ volumes:
 
 services:
   redis:
-    image: redis:8.4@sha256:bbb8fbcc29cc4c12ef123a35d7de34d374e3ba7f7763ed42eddfb3746dddc393
+    image: redis:8.4@sha256:47200b04138293fae39737e50878a238b13ec0781083126b1b0c63cf5d992e8d
     container_name: flowlint-redis
     restart: unless-stopped
     command: ["redis-server", "--save", "60", "1000", "--appendonly", "yes"]
@@ -138,7 +138,7 @@ services:
       - tempo
 
   grafana:
-    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:c261ffbc25534164dbec22340cefab7a6bab2d29620dd2effde3e975b28cb301
+    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:9318f0a08c21ffe507b660abd2716cee78cdabd04740242b6a91938c56a87cac
     container_name: flowlint-grafana
     pull_policy: always
     restart: unless-stopped
