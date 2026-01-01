@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.1](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.0...flowlint-github-app-v1.7.1) (2026-01-01)
+
+
+### Bug Fixes
+
+* **ci:** use PAT for auto-update-branch to trigger CI ([1436cee](https://github.com/Replikanti/flowlint-github-app/commit/1436cee9f87b0e80b5234a83e6380ede93f5b50f))
+* **ci:** use PAT for auto-update-branch to trigger CI ([dcdbb34](https://github.com/Replikanti/flowlint-github-app/commit/dcdbb34e85b83ca7884d318182ff5d42a309fa85))
+
 ## [1.7.0](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.6.7...flowlint-github-app-v1.7.0) (2025-12-30)
 
 
