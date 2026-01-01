@@ -8,7 +8,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup-env.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'clover', 'cobertura'],
+      reporter: ['text', 'json', 'html', 'clover', 'cobertura', 'json-summary'],
       include: ['apps/api/src/**', 'apps/worker/src/**', 'packages/github/**'],
       exclude: [
         'tests/**', 
