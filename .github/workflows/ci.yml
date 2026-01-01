@@ -26,7 +26,7 @@ jobs:
       - run: npm run test:coverage
       - name: Update Coverage Badge
         if: github.ref == 'refs/heads/main'
-        run: node scripts/update-badge.js
+        run: node scripts/update-badge.mjs
             - name: Create Pull Request for Badge
               id: cpr
               if: github.ref == 'refs/heads/main'
