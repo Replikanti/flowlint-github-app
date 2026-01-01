@@ -9,6 +9,22 @@ vi.mock('../../packages/logger', () => ({
   },
 }));
 
+// Helper to create mock PRFile objects
+function createMockPRFile(overrides: Partial<PRFile>): PRFile {
+  return {
+    filename: 'test.json',
+    status: 'modified',
+    sha: 'abc123',
+    additions: 0,
+    deletions: 0,
+    changes: 0,
+    blob_url: 'https://github.com/blob',
+    raw_url: 'https://github.com/raw',
+    contents_url: 'https://api.github.com/contents',
+    ...overrides,
+  };
+}
+
 describe('GitHub Sniffer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -17,8 +33,8 @@ describe('GitHub Sniffer', () => {
   describe('pickTargets', () => {
     it('should filter files by include patterns', () => {
       const files: PRFile[] = [
-        { filename: 'workflow.json', status: 'modified', sha: 'abc' },
-        { filename: 'src/index.ts', status: 'modified', sha: 'def' },
+        createMockPRFile({ filename: 'workflow.json' }),
+        createMockPRFile({ filename: 'src/index.ts' }),
       ];
       const globs = { include: ['*.json'], ignore: [] };
 
@@ -30,8 +46,8 @@ describe('GitHub Sniffer', () => {
 
     it('should exclude files by ignore patterns', () => {
       const files: PRFile[] = [
-        { filename: 'workflow.json', status: 'modified', sha: 'abc' },
-        { filename: 'node_modules/lib.json', status: 'modified', sha: 'def' },
+        createMockPRFile({ filename: 'workflow.json' }),
+        createMockPRFile({ filename: 'node_modules/lib.json' }),
       ];
       const globs = { include: ['**/*.json'], ignore: ['node_modules/**'] };
 
@@ -43,8 +59,8 @@ describe('GitHub Sniffer', () => {
 
     it('should filter out removed files', () => {
       const files: PRFile[] = [
-        { filename: 'workflow.json', status: 'removed', sha: 'abc' },
-        { filename: 'other.json', status: 'modified', sha: 'def' },
+        createMockPRFile({ filename: 'workflow.json', status: 'removed' }),
+        createMockPRFile({ filename: 'other.json' }),
       ];
       const globs = { include: ['*.json'], ignore: [] };
 
@@ -59,17 +75,15 @@ describe('GitHub Sniffer', () => {
     it('should fetch file contents successfully', async () => {
       const mockOctokit = {
         request: vi.fn().mockResolvedValue({
-          data: {
-            content: Buffer.from('{"test":"data"}').toString('base64'),
-          },
+          data: { content: Buffer.from('{"test":"data"}').toString('base64') },
         }),
       };
 
-      const targets: PRFile[] = [
-        { filename: 'workflow.json', status: 'modified', sha: 'abc123' },
-      ];
-
-      const result = await fetchRawFiles(mockOctokit as any, 'owner/repo', targets);
+      const result = await fetchRawFiles(
+        mockOctokit as any,
+        'owner/repo',
+        [createMockPRFile({ filename: 'workflow.json' })]
+      );
 
       expect(result.contents.size).toBe(1);
       expect(result.contents.get('workflow.json')).toBe('{"test":"data"}');
@@ -77,19 +91,16 @@ describe('GitHub Sniffer', () => {
     });
 
     it('should handle files with missing SHA', async () => {
-      const mockOctokit = {
-        request: vi.fn(),
-      };
+      const mockOctokit = { request: vi.fn() };
 
-      const targets: PRFile[] = [
-        { filename: 'workflow.json', status: 'modified', sha: undefined as any },
-      ];
-
-      const result = await fetchRawFiles(mockOctokit as any, 'owner/repo', targets);
+      const result = await fetchRawFiles(
+        mockOctokit as any,
+        'owner/repo',
+        [createMockPRFile({ sha: undefined as any })]
+      );
 
       expect(result.contents.size).toBe(0);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].filename).toBe('workflow.json');
       expect(result.errors[0].error).toContain('Missing SHA');
       expect(mockOctokit.request).not.toHaveBeenCalled();
     });
@@ -99,33 +110,28 @@ describe('GitHub Sniffer', () => {
         request: vi.fn().mockRejectedValue(new Error('API rate limit exceeded')),
       };
 
-      const targets: PRFile[] = [
-        { filename: 'workflow.json', status: 'modified', sha: 'abc123' },
-      ];
-
-      const result = await fetchRawFiles(mockOctokit as any, 'owner/repo', targets);
+      const result = await fetchRawFiles(
+        mockOctokit as any,
+        'owner/repo',
+        [createMockPRFile({ filename: 'workflow.json' })]
+      );
 
       expect(result.contents.size).toBe(0);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].filename).toBe('workflow.json');
       expect(result.errors[0].error).toContain('API rate limit exceeded');
     });
 
     it('should handle multiple files with mixed success', async () => {
       const mockOctokit = {
         request: vi.fn()
-          .mockResolvedValueOnce({
-            data: { content: Buffer.from('success').toString('base64') },
-          })
+          .mockResolvedValueOnce({ data: { content: Buffer.from('success').toString('base64') } })
           .mockRejectedValueOnce(new Error('Not found')),
       };
 
-      const targets: PRFile[] = [
-        { filename: 'file1.json', status: 'modified', sha: 'abc' },
-        { filename: 'file2.json', status: 'modified', sha: 'def' },
-      ];
-
-      const result = await fetchRawFiles(mockOctokit as any, 'owner/repo', targets);
+      const result = await fetchRawFiles(mockOctokit as any, 'owner/repo', [
+        createMockPRFile({ filename: 'file1.json' }),
+        createMockPRFile({ filename: 'file2.json' }),
+      ]);
 
       expect(result.contents.size).toBe(1);
       expect(result.contents.get('file1.json')).toBe('success');

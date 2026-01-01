@@ -40,6 +40,16 @@ import { app } from '../../apps/api/src/app';
 
 const MOCK_SECRET_VALUE = process.env.TEST_SECRET || 'random-test-value-' + Date.now();
 
+// Helper function to send signed webhook request
+function sendWebhook(event: string, payload: any) {
+  const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
+  return request(app)
+    .post('/webhooks/github')
+    .set('x-github-event', event)
+    .set('x-hub-signature-256', signature)
+    .send(payload);
+}
+
 describe('API App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -69,20 +79,10 @@ describe('API App', () => {
       action: 'opened',
       installation: { id: 123 },
       repository: { full_name: 'owner/repo' },
-      pull_request: {
-        number: 1,
-        head: { sha: 'sha', ref: 'branch' },
-      },
+      pull_request: { number: 1, head: { sha: 'sha', ref: 'branch' } },
     };
 
-    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
-
-    const res = await request(app)
-      .post('/webhooks/github')
-      .set('x-github-event', 'pull_request')
-      .set('x-hub-signature-256', signature)
-      .send(payload);
-
+    const res = await sendWebhook('pull_request', payload);
     expect(res.status).toBe(200);
   });
 
@@ -97,14 +97,8 @@ describe('API App', () => {
         pull_requests: [{ number: 1, head: { ref: 'branch' } }],
       },
     };
-    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
-    const res = await request(app)
-      .post('/webhooks/github')
-      .set('x-github-event', 'check_suite')
-      .set('x-hub-signature-256', signature)
-      .send(payload);
-
+    const res = await sendWebhook('check_suite', payload);
     expect(res.status).toBe(200);
   });
 
@@ -116,38 +110,22 @@ describe('API App', () => {
       check_run: {
         id: 789,
         head_sha: 'sha',
-        check_suite: {
-          id: 456,
-          pull_requests: [{ number: 1 }],
-        },
+        check_suite: { id: 456, pull_requests: [{ number: 1 }] },
       },
     };
-    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
-    const res = await request(app)
-      .post('/webhooks/github')
-      .set('x-github-event', 'check_run')
-      .set('x-hub-signature-256', signature)
-      .send(payload);
-
+    const res = await sendWebhook('check_run', payload);
     expect(res.status).toBe(200);
   });
 
   it('POST /webhooks/github should reject missing installation id', async () => {
     const payload = {
       action: 'opened',
-      // installation missing
       repository: { full_name: 'owner/repo' },
       pull_request: { number: 1, head: { sha: 'sha', ref: 'branch' } },
     };
-    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
-    const res = await request(app)
-      .post('/webhooks/github')
-      .set('x-github-event', 'pull_request')
-      .set('x-hub-signature-256', signature)
-      .send(payload);
-
+    const res = await sendWebhook('pull_request', payload);
     expect(res.status).toBe(202);
     expect(res.body.error).toContain('Missing installation id');
   });
@@ -155,18 +133,11 @@ describe('API App', () => {
   it('POST /webhooks/github should reject check_suite without installation id', async () => {
     const payload = {
       action: 'requested',
-      // installation missing
       repository: { full_name: 'owner/repo' },
       check_suite: { head_sha: 'sha', id: 456 },
     };
-    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
-    const res = await request(app)
-      .post('/webhooks/github')
-      .set('x-github-event', 'check_suite')
-      .set('x-hub-signature-256', signature)
-      .send(payload);
-
+    const res = await sendWebhook('check_suite', payload);
     expect(res.status).toBe(202);
   });
 
@@ -188,10 +159,8 @@ describe('API App', () => {
   });
 
   it('should handle unhandled errors with 500 response', async () => {
-    // Create a route that throws an error to trigger error handler
     const testApp = await import('../../apps/api/src/app').then(m => m.app);
 
-    // Trigger an error by sending malformed JSON to webhook endpoint
     const res = await request(testApp)
       .post('/webhooks/github')
       .set('Content-Type', 'application/json')
@@ -199,7 +168,6 @@ describe('API App', () => {
       .set('x-hub-signature-256', 'sha256=invalid')
       .send('invalid json');
 
-    // Express handles JSON parse errors with 400, but other errors go to error handler
     expect(res.status).toBe(500);
   });
 
@@ -208,20 +176,10 @@ describe('API App', () => {
       action: 'requested',
       installation: { id: 123 },
       repository: { full_name: 'owner/repo' },
-      check_suite: {
-        head_sha: 'sha',
-        id: 456,
-        pull_requests: [], // Empty array
-      },
+      check_suite: { head_sha: 'sha', id: 456, pull_requests: [] },
     };
-    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
-    const res = await request(app)
-      .post('/webhooks/github')
-      .set('x-github-event', 'check_suite')
-      .set('x-hub-signature-256', signature)
-      .send(payload);
-
+    const res = await sendWebhook('check_suite', payload);
     expect(res.status).toBe(202);
     expect(res.body.error).toContain('No pull requests attached to check suite');
   });
@@ -235,17 +193,11 @@ describe('API App', () => {
         head_sha: 'sha',
         id: 456,
         pull_requests: [{ number: 1, head: { ref: 'branch' } }],
-        check_runs: [{ id: 1, head_sha: 'sha', name: 'FlowLint' }], // Using check_runs instead of latest_check_runs
+        check_runs: [{ id: 1, head_sha: 'sha', name: 'FlowLint' }],
       },
     };
-    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
-    const res = await request(app)
-      .post('/webhooks/github')
-      .set('x-github-event', 'check_suite')
-      .set('x-hub-signature-256', signature)
-      .send(payload);
-
+    const res = await sendWebhook('check_suite', payload);
     expect(res.status).toBe(200);
   });
 
@@ -263,14 +215,8 @@ describe('API App', () => {
         ],
       },
     };
-    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
-    const res = await request(app)
-      .post('/webhooks/github')
-      .set('x-github-event', 'check_suite')
-      .set('x-hub-signature-256', signature)
-      .send(payload);
-
+    const res = await sendWebhook('check_suite', payload);
     expect(res.status).toBe(200);
   });
 
@@ -283,20 +229,11 @@ describe('API App', () => {
         id: 789,
         head_sha: 'sha',
         head_branch: 'fallback-branch',
-        check_suite: {
-          id: 456,
-          pull_requests: [{ number: 1 }], // No head.ref provided
-        },
+        check_suite: { id: 456, pull_requests: [{ number: 1 }] },
       },
     };
-    const signature = 'sha256=' + crypto.createHmac('sha256', MOCK_SECRET_VALUE).update(JSON.stringify(payload)).digest('hex');
 
-    const res = await request(app)
-      .post('/webhooks/github')
-      .set('x-github-event', 'check_run')
-      .set('x-hub-signature-256', signature)
-      .send(payload);
-
+    const res = await sendWebhook('check_run', payload);
     expect(res.status).toBe(200);
   });
 
