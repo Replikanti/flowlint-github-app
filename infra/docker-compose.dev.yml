@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   api:
-    image: node:24.12.0@sha256:e7a6c521e0e133cb3f4d97c71a95f290fb3816dca1a3b002e49059e2095870e5
+    image: node:24.12.0@sha256:b52a8d1206132b36d60e51e413d9a81336e8a0206d3b648cabd6d5a49c4c0f54
     command: npx ts-node --project /srv/flowlint/tsconfig.json apps/api/src/server.ts
     env_file:
       - ../.env
@@ -22,7 +22,7 @@ services:
       - ..:/srv/flowlint
     working_dir: /srv/flowlint
   worker:
-    image: node:24.12.0@sha256:e7a6c521e0e133cb3f4d97c71a95f290fb3816dca1a3b002e49059e2095870e5
+    image: node:24.12.0@sha256:b52a8d1206132b36d60e51e413d9a81336e8a0206d3b648cabd6d5a49c4c0f54
     command: npx ts-node --project /srv/flowlint/tsconfig.json apps/worker/src/worker.ts
     env_file:
       - ../.env
@@ -40,7 +40,7 @@ services:
     working_dir: /srv/flowlint
     stop_grace_period: 60s
   redis:
-    image: redis:8.4@sha256:bbb8fbcc29cc4c12ef123a35d7de34d374e3ba7f7763ed42eddfb3746dddc393
+    image: redis:8.4@sha256:47200b04138293fae39737e50878a238b13ec0781083126b1b0c63cf5d992e8d
   jaeger:
     image: jaegertracing/all-in-one:latest@sha256:ab6f1a1f0fb49ea08bcd19f6b84f6081d0d44b364b6de148e1798eb5816bacac
     container_name: flowlint-jaeger
