@@ -1,6 +1,6 @@
 ﻿# FlowLint GitHub App
 
-![Coverage](https://img.shields.io/badge/coverage-80%25-green)
+![Coverage](https://img.shields.io/badge/coverage-85%25-green)
 
 GitHub App that reviews PRs containing n8n workflow files. When a pull request changes workflow files, FlowLint parses them, applies lint rules, and posts a Check Run with findings.
 
