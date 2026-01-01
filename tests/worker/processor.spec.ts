@@ -171,11 +171,153 @@ describe('Worker Processor', () => {
     // Should verify it tried to update check run to failure
     expect(mockOctokit.request).toHaveBeenCalledWith(
       'PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}',
-      expect.objectContaining({ 
+      expect.objectContaining({
         check_run_id: 789,
         conclusion: 'failure',
         output: expect.objectContaining({ title: 'FlowLint analysis failed' })
       })
     );
+  });
+
+  it('should handle null check_runs in commit check response', async () => {
+    mockOctokit.request.mockImplementation((route) => {
+      if (route.includes('POST /repos/{owner}/{repo}/check-runs')) {
+        return { data: { id: 789 } };
+      }
+      if (route.includes('GET /repos/{owner}/{repo}/commits/{ref}/check-runs')) {
+        return { data: { check_runs: null } }; // null instead of array
+      }
+      return { data: {} };
+    });
+
+    await reviewProcessor(mockJob);
+
+    // Should handle null gracefully and continue
+    expect(mockOctokit.request).toHaveBeenCalled();
+  });
+
+  it('should throw TypeError when paginate is missing', async () => {
+    const brokenOctokit = { request: vi.fn().mockResolvedValue({ data: { id: 789 } }) };
+    (getInstallationClient as any).mockResolvedValue(brokenOctokit);
+
+    mockOctokit.request.mockResolvedValue({ data: { id: 789, check_runs: [] } });
+
+    await expect(reviewProcessor(mockJob)).rejects.toThrow(TypeError);
+    await expect(reviewProcessor(mockJob)).rejects.toThrow('Octokit client is missing paginate()');
+  });
+
+  it('should handle failure to update check run on error', async () => {
+    mockOctokit.paginate.mockRejectedValue(new Error('Processing failed'));
+    mockOctokit.request.mockImplementation((route) => {
+      if (route.includes('PATCH /repos/{owner}/{repo}/check-runs')) {
+        throw new Error('Failed to update check run');
+      }
+      if (route.includes('POST /repos/{owner}/{repo}/check-runs')) {
+        return { data: { id: 789 } };
+      }
+      return { data: { check_runs: [] } };
+    });
+
+    await expect(reviewProcessor(mockJob)).rejects.toThrow('Processing failed');
+
+    // Should still try to update but log the error
+    expect(mockOctokit.request).toHaveBeenCalledWith(
+      'PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}',
+      expect.objectContaining({ conclusion: 'failure' })
+    );
+  });
+
+  it('should send annotations when enabled and findings exist', async () => {
+    (pickTargets as any).mockReturnValue([{ filename: 'workflow.json' }]);
+    (fetchRawFiles as any).mockResolvedValue({
+      contents: new Map([['workflow.json', '{ "nodes": [], "connections": {} }']]),
+      errors: [],
+    });
+    mockParseN8n.mockReturnValue({ nodes: [], edges: [], meta: { nodeLines: {} } });
+    mockRunAllRules.mockReturnValue([{ rule: 'R1', severity: 'must', message: 'Error', line: 1 }]);
+    mockBuildCheckOutput.mockReturnValue({
+      conclusion: 'failure',
+      output: { title: 'Failed', summary: 'Found errors' },
+    });
+    mockBuildAnnotations.mockReturnValue([
+      { path: 'workflow.json', start_line: 1, end_line: 1, annotation_level: 'failure', message: 'Error' },
+    ]);
+
+    (loadConfigFromGitHub as any).mockResolvedValue({
+      files: { include: [] },
+      report: { summary_limit: 10, annotations: true },
+    });
+
+    await reviewProcessor(mockJob);
+
+    // Should send annotations in the update
+    expect(mockOctokit.request).toHaveBeenCalledWith(
+      'PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}',
+      expect.objectContaining({
+        output: expect.objectContaining({
+          annotations: expect.arrayContaining([
+            expect.objectContaining({ message: 'Error' }),
+          ]),
+        }),
+      })
+    );
+  });
+
+  it('should filter previous runs by name and head_sha', async () => {
+    mockOctokit.request.mockImplementation((route) => {
+      if (route.includes('POST /repos/{owner}/{repo}/check-runs')) {
+        return { data: { id: 789 } };
+      }
+      if (route.includes('GET /repos/{owner}/{repo}/commits/{ref}/check-runs')) {
+        return {
+          data: {
+            check_runs: [
+              { id: 100, name: 'FlowLint', head_sha: 'sha123' }, // Matches
+              { id: 101, name: 'OtherCheck', head_sha: 'sha123' }, // Wrong name
+              { id: 102, name: 'FlowLint', head_sha: 'different' }, // Wrong SHA
+            ],
+          },
+        };
+      }
+      return { data: {} };
+    });
+
+    await reviewProcessor(mockJob);
+
+    // Should supersede only the matching run (id 100)
+    expect(mockOctokit.request).toHaveBeenCalledWith(
+      'PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}',
+      expect.objectContaining({
+        check_run_id: 100,
+        conclusion: 'neutral',
+      })
+    );
+  });
+
+  it('should handle error when superseding old runs', async () => {
+    mockOctokit.request.mockImplementation((route, params) => {
+      if (route.includes('POST /repos/{owner}/{repo}/check-runs')) {
+        return { data: { id: 789 } };
+      }
+      if (route.includes('GET /repos/{owner}/{repo}/commits/{ref}/check-runs')) {
+        return {
+          data: {
+            check_runs: [{ id: 100, name: 'FlowLint', head_sha: 'sha123' }],
+          },
+        };
+      }
+      if (route.includes('PATCH') && route.includes('check_run_id')) {
+        if (params && (params as any).check_run_id === 100) {
+          throw new Error('Failed to supersede');
+        }
+        return { data: {} };
+      }
+      return { data: {} };
+    });
+
+    // Should not throw, just log the warning
+    await reviewProcessor(mockJob);
+
+    expect(mockOctokit.request).toHaveBeenCalled();
   });
 });
