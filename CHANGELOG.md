@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.3](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.2...flowlint-github-app-v1.7.3) (2026-01-02)
+
+
+### Bug Fixes
+
+* **ci:** enable auto-merge for coverage badge PR ([7b018b1](https://github.com/Replikanti/flowlint-github-app/commit/7b018b137dd72775c645bbbba202c67c467a594a))
+* **ci:** update workflow to use .mjs extension for badge script ([a6ab4f6](https://github.com/Replikanti/flowlint-github-app/commit/a6ab4f69a807f330bf8cf11a74e01da5a8faa1a0))
+
 ## [1.7.2](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.1...flowlint-github-app-v1.7.2) (2026-01-02)
 
 
