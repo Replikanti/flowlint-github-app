@@ -7,15 +7,15 @@ on:
 jobs:
   update-prs:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Update all open PR branches
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_APPROVE_PAT }}
+        run: |
+          # Get all open PRs that are behind main
+          prs=$(gh pr list --repo ${{ github.repository }} --state open --json number,headRefName,mergeStateStatus --jq '.[] | select(.mergeStateStatus == "BEHIND") | .number')
 
-      - name: Update PR branches
-        uses: adRise/update-pr-branch@a51c014567e5be98445551cce9b8f5ad42dd8acf # v0.10.2
-        with:
-          token: ${{ secrets.AUTO_APPROVE_PAT }}
-          base: main
-          required_approval_count: 1
+          for pr in $prs; do
+            echo "Updating PR #$pr..."
+            gh pr update-branch $pr --repo ${{ github.repository }} --rebase || echo "Failed to update PR #$pr"
+          done
