@@ -117,7 +117,7 @@ services:
       disable: true
 
   prometheus:
-    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:8c9244929a7b37c05880705f92247a3ea05b9956faf5b4d3a24ff7c0dc7fd69f
+    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:c1b4731d3b6dd595e7e650bf550b6fc8ec763e87aea6e156e709ebf9cf14cb2d
     container_name: flowlint-prometheus
     pull_policy: always
     restart: unless-stopped
@@ -138,7 +138,7 @@ services:
       - tempo
 
   grafana:
-    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:16d916468c3750e5970c4f564e98f671710f9ae64f5bc3e7edf6f1632d3ef7e9
+    image: ghcr.io/replikanti/flowlint-grafana:latest@sha256:6ddbf3359a084c2adf6e2acb405615cecfcfaaa515dade885bb9ca84da4a2f17
     container_name: flowlint-grafana
     pull_policy: always
     restart: unless-stopped
