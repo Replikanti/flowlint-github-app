@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.5](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.4...flowlint-github-app-v1.7.5) (2026-01-02)
+
+
+### Bug Fixes
+
+* **ci:** simplify auto-update-branch workflow ([846cc45](https://github.com/Replikanti/flowlint-github-app/commit/846cc45595a3612e6a1ca66c83c38faed887b49d))
+
 ## [1.7.4](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.3...flowlint-github-app-v1.7.4) (2026-01-02)
 
 
