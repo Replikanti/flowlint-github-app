@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.4](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.3...flowlint-github-app-v1.7.4) (2026-01-02)
+
+
+### Bug Fixes
+
+* **ci:** use admin bypass for auto-merge of badge PR ([861b158](https://github.com/Replikanti/flowlint-github-app/commit/861b158dc07e684dbe665eabf15c7fcf6123ea93))
+
 ## [1.7.3](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.2...flowlint-github-app-v1.7.3) (2026-01-02)
 
 
