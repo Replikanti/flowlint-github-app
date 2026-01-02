@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.1...flowlint-github-app-v1.7.2) (2026-01-02)
+
+
+### Bug Fixes
+
+* **ci:** rename update-badge script to .mjs extension ([52802d5](https://github.com/Replikanti/flowlint-github-app/commit/52802d5d3f8dbb131be734b4323544094512531c))
+
 ## [1.7.1](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.0...flowlint-github-app-v1.7.1) (2026-01-01)
 
 
