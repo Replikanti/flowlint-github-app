@@ -57,7 +57,7 @@ services:
         condition: service_completed_successfully
 
   api:
-    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:87474321c2a91ae35686cb8a88a69ef4b2fe366cb0da9b92b69791bd550a711c
+    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:df769f5a10253cdd6d37cfb6d496475c5cddd1f3194dda66600eb69c71a238d3
     container_name: flowlint-api
     pull_policy: always
     command: node dist/apps/api/src/server.js
@@ -90,7 +90,7 @@ services:
       retries: 3
 
   worker:
-    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:87474321c2a91ae35686cb8a88a69ef4b2fe366cb0da9b92b69791bd550a711c
+    image: ghcr.io/replikanti/flowlint-backend:latest@sha256:df769f5a10253cdd6d37cfb6d496475c5cddd1f3194dda66600eb69c71a238d3
     container_name: flowlint-worker
     pull_policy: always
     command: node dist/apps/worker/src/worker.js
