@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.7.6](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.5...flowlint-github-app-v1.7.6) (2026-01-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @replikanti/flowlint-core to ^0.10.0 ([#471](https://github.com/Replikanti/flowlint-github-app/issues/471)) ([c569f7b](https://github.com/Replikanti/flowlint-github-app/commit/c569f7ba8cc15b416df58a3cc2803926d7c2763b))
+* **deps:** update dependency express to v5 ([#475](https://github.com/Replikanti/flowlint-github-app/issues/475)) ([978ac16](https://github.com/Replikanti/flowlint-github-app/commit/978ac16ac02559b7f9a0377418c9a2f1a017a7f9))
+* **deps:** update opentelemetry-js monorepo ([#472](https://github.com/Replikanti/flowlint-github-app/issues/472)) ([1798179](https://github.com/Replikanti/flowlint-github-app/commit/1798179ea26622ed06629e90050f091c828422cf))
+* **deps:** update opentelemetry-js-contrib monorepo ([#473](https://github.com/Replikanti/flowlint-github-app/issues/473)) ([8681cd2](https://github.com/Replikanti/flowlint-github-app/commit/8681cd21ca52eeb6ebfa8af9e8c330fbba4bf25c))
+
 ## [1.7.5](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.4...flowlint-github-app-v1.7.5) (2026-01-02)
 
 
