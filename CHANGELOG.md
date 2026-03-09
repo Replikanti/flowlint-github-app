@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.9](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.8...flowlint-github-app-v1.7.9) (2026-03-09)
+
+
+### Bug Fixes
+
+* **tests:** update fixture for R15 ([#648](https://github.com/Replikanti/flowlint-github-app/issues/648)) ([e91f3b3](https://github.com/Replikanti/flowlint-github-app/commit/e91f3b3acd70b3e1e0d67a1a3fc2422a6a37b1c1))
+
 ## [1.7.8](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.7...flowlint-github-app-v1.7.8) (2026-03-09)
 
 
