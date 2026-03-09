@@ -36,6 +36,9 @@ export const validWorkflow = JSON.stringify({
     'Respond to Webhook': { main: [[{ node: 'Fetch User Data', type: 'main', index: 0 }]] },
     'Fetch User Data': { error: [[{ node: 'Error Handler', type: 'main', index: 0 }]] },
   },
+  settings: {
+    errorWorkflow: 'some-handler-id'
+  },
 });
 
 // R2 violation: continueOnFail enabled (should fail check)
