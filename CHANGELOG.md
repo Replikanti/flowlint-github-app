@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.8](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.7...flowlint-github-app-v1.7.8) (2026-03-09)
+
+
+### Bug Fixes
+
+* **ci:** fix merge command flags ([bbd6ad0](https://github.com/Replikanti/flowlint-github-app/commit/bbd6ad06b25ef837b358e39d2925c7ea4010e3ac))
+* **ci:** fix merge command flags in workflow ([8bad1cc](https://github.com/Replikanti/flowlint-github-app/commit/8bad1ccb54ccf24fb2ed0952d2c5e98021704958))
+
 ## [1.7.7](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.6...flowlint-github-app-v1.7.7) (2026-01-22)
 
 
