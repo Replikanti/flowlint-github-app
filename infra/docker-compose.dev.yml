@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   api:
-    image: node:24.13.0@sha256:b2b2184ba9b78c022e1d6a7924ec6fba577adf28f15c9d9c457730cc4ad3807a
+    image: node:24.13.0@sha256:1de022d8459f896fff2e7b865823699dc7a8d5567507e8b87b14a7442e07f206
     command: npx ts-node --project /srv/flowlint/tsconfig.json apps/api/src/server.ts
     env_file:
       - ../.env
@@ -22,7 +22,7 @@ services:
       - ..:/srv/flowlint
     working_dir: /srv/flowlint
   worker:
-    image: node:24.13.0@sha256:b2b2184ba9b78c022e1d6a7924ec6fba577adf28f15c9d9c457730cc4ad3807a
+    image: node:24.13.0@sha256:1de022d8459f896fff2e7b865823699dc7a8d5567507e8b87b14a7442e07f206
     command: npx ts-node --project /srv/flowlint/tsconfig.json apps/worker/src/worker.ts
     env_file:
       - ../.env
