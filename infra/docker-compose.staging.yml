@@ -6,7 +6,7 @@ version: '3.9'
 
 services:
   redis:
-    image: redis:8-alpine@sha256:6cbef353e480a8a6e7f10ec545f13d7d3fa85a212cdcc5ffaf5a1c818b9d3798
+    image: redis:8-alpine@sha256:ad0a6eff0a40304ab1ab4f50f0dc192d82b071e1094eac961bcb6106092f8a4e
     container_name: flowlint-redis-staging
     command: redis-server --appendonly yes --databases 16
     volumes:
