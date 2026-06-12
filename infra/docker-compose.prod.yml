@@ -117,7 +117,7 @@ services:
       disable: true
 
   prometheus:
-    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:825c5c9f35af9bf75bdab1fc4fe23ed5bfe89c6af705548fdf262324d8811921
+    image: ghcr.io/replikanti/flowlint-prometheus:latest@sha256:9e642241a4153dd2a901e0753381f7f06026b011498f32dc934820d6f885b5d1
     container_name: flowlint-prometheus
     pull_policy: always
     restart: unless-stopped
