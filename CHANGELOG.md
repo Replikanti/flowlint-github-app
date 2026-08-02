@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.10](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.9...flowlint-github-app-v1.7.10) (2026-08-02)
+
+
+### Bug Fixes
+
+* **deps:** update opentelemetry-js monorepo ([#917](https://github.com/Replikanti/flowlint-github-app/issues/917)) ([21b631b](https://github.com/Replikanti/flowlint-github-app/commit/21b631bc004e9a19ebc4ca8aced99c81a14dda13))
+
 ## [1.7.9](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.8...flowlint-github-app-v1.7.9) (2026-03-09)
 
 
