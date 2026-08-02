@@ -40,7 +40,7 @@ services:
     working_dir: /srv/flowlint
     stop_grace_period: 60s
   redis:
-    image: redis:8.4@sha256:b69f2ae9adef7d679fc7cace28e1d4d7e0359b1341861a55995aef5d1b285166
+    image: redis:8.4@sha256:6159aff1adde991d8747d705fa1135ceda04b0414dc372b381a6af415ec3b374
   jaeger:
     image: jaegertracing/all-in-one:latest@sha256:ab6f1a1f0fb49ea08bcd19f6b84f6081d0d44b364b6de148e1798eb5816bacac
     container_name: flowlint-jaeger
