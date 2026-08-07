@@ -12,7 +12,7 @@ volumes:
 
 services:
   redis:
-    image: redis:8.4@sha256:50c3ce9b821eb1f04ba0c3f11a675a62a11bd75689e6ee49f908fadb4d60a8d0
+    image: redis:8.4@sha256:efe6e2625e4601cd7119c4fb48b1c04cf3071f8b1729ede1216ceee8bc99742d
     container_name: flowlint-redis
     restart: unless-stopped
     command: ["redis-server", "--save", "60", "1000", "--appendonly", "yes"]
