@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.11](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.10...flowlint-github-app-v1.7.11) (2026-08-14)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @octokit/plugin-paginate-rest to v15 ([#1048](https://github.com/Replikanti/flowlint-github-app/issues/1048)) ([be0dc29](https://github.com/Replikanti/flowlint-github-app/commit/be0dc29fbeaee7e668bd2b3d56db85d1c717f2fa))
+
 ## [1.7.10](https://github.com/Replikanti/flowlint-github-app/compare/flowlint-github-app-v1.7.9...flowlint-github-app-v1.7.10) (2026-08-02)
 
 
