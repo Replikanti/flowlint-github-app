@@ -1,6 +1,6 @@
 {
     "name": "flowlint-github-app",
-    "version": "1.7.10",
+    "version": "1.7.11",
     "private": true,
     "license": "MIT",
     "type": "commonjs",
