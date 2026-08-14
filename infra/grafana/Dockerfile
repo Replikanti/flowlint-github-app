@@ -1,2 +1,2 @@
-FROM grafana/grafana:12.4.8@sha256:7753ad493720e33560077e8bc5e05fbce4ade777f1387b19ab5050b6777111dd
+FROM grafana/grafana:13.1.3@sha256:ab5cb380e3ff3172d6c8bd2e7cfd31cce977d2881b260e1f5bc089bf0b759b43
 COPY provisioning /etc/grafana/provisioning
