@@ -36,7 +36,7 @@ services:
       - flowlint_net
 
   tempo:
-    image: ghcr.io/replikanti/flowlint-tempo:latest@sha256:7a2c30cb4be2f3dbce08b2a9eb7ef39ff0a23255013efedda035ce7ff0b97857
+    image: ghcr.io/replikanti/flowlint-tempo:latest@sha256:e88040427dc616e911c643f7f67d189ff95c6eeb20b1085f8444cdafd0b16cc9
     container_name: flowlint-tempo
     pull_policy: always
     command:
